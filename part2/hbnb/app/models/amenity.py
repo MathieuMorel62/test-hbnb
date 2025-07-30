@@ -7,8 +7,8 @@ class Amenity(BaseModel):
         super().__init__()
 
         # Validation des attributs
-        if not name or len(name) > 50:
+        if not name or len(name.strip()) == 0 or len(name) > 50:
             raise ValueError("The name of the equipment is required and must be less than 50 characters.")
-        
+
         # Initialisation des attributs de l'objet
         self.name = name
