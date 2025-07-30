@@ -3,7 +3,6 @@ from .user import User
 from .place import Place
 
 
-# Classe pour la gestion des reviews
 class Review(BaseModel):
     """Classe pour la gestion des reviews"""
     def __init__(self, text, rating, place, user):
