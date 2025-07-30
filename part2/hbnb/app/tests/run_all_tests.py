@@ -5,7 +5,7 @@ import os
 
 
 def run_test(test_file):
-    """Executes a test file and displays the result"""
+    """Exécute un fichier de test et affiche le résultat"""
     print(f"\n{'='*50}")
     print(f"EXÉCUTION DE {test_file}")
     print('='*50)
@@ -25,7 +25,7 @@ def run_test(test_file):
         print(f"❌ Erreur lors de l'exécution: {e}")
 
 def main():
-    """Executes all tests"""
+    """Exécute tous les tests"""
     print("LANCEMENT DE TOUS LES TESTS DU PROJET HBNB")
     
     tests = [
