@@ -19,7 +19,8 @@ from app.models.test.test_user import TestUser
 from app.models.test.test_amenity import TestAmenity
 from app.models.test.test_place import TestPlace
 from app.models.test.test_review import TestReview
-
+from app.api.v1.test.test_users_endpoints import TestUsersEndpoints
+from app.services.test.test_facade import TestHBnBFacade
 
 class ColoredTestResult(unittest.TextTestResult):
     """Résultat de test avec couleurs et format amélioré"""
@@ -52,8 +53,12 @@ def discover_all_tests():
             (TestPlace, "Tests Place (Models)"),
             (TestReview, "Tests Review (Models)")
         ],
-        'API': [],
-        'Services': [],
+        'API': [
+            (TestUsersEndpoints, "Tests Users Endpoints (API)"),
+        ],
+        'Services': [
+            (TestHBnBFacade, "Tests HBnB Facade (Services)"),
+        ],
         'Persistence': []
     }
     
