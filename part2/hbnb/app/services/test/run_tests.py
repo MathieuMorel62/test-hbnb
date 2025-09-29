@@ -11,6 +11,7 @@ import os
 sys.path.append(os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))))
 
 from test_facade import TestHBnBFacade
+from test_amenities_facade import TestAmenitiesFacade
 
 
 def run_services_tests():
@@ -22,7 +23,8 @@ def run_services_tests():
     
     # Classes de tests disponibles
     test_classes = [
-        TestHBnBFacade
+        TestHBnBFacade,
+        TestAmenitiesFacade
     ]
     
     # Créer une suite avec tous les tests
@@ -49,7 +51,9 @@ def run_specific_test(test_name):
     """Lance un test spécifique"""
     test_classes = {
         'facade': TestHBnBFacade,
-        'hbnb_facade': TestHBnBFacade
+        'hbnb_facade': TestHBnBFacade,
+        'amenities_facade': TestAmenitiesFacade,
+        'amenities': TestAmenitiesFacade
     }
     
     if test_name.lower() not in test_classes:
