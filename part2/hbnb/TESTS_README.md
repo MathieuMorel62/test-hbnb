@@ -21,12 +21,14 @@ hbnb/
 │   │       └── test/
 │   │           ├── __init__.py
 │   │           ├── run_tests.py   # Tests de l'API v1
-│   │           └── test_users_endpoints.py
+│   │           ├── test_users_endpoints.py
+│   │           └── test_amenities_endpoints.py
 │   ├── services/
 │   │   └── test/
 │   │       ├── __init__.py
 │   │       ├── run_tests.py       # Tests du module Services
-│   │       └── test_facade.py
+│   │       ├── test_facade.py
+│   │       └── test_amenities_facade.py
 │   └── persistence/
 │       └── test/
 │           ├── __init__.py
@@ -73,8 +75,14 @@ python3 test_all.py --class review
 # Tests des endpoints utilisateurs (API)
 python3 test_all.py --class users_endpoints
 
+# Tests des endpoints amenities (API)
+python3 test_all.py --class amenities_endpoints
+
 # Tests de la facade (Services)
 python3 test_all.py --class facade
+
+# Tests de la facade amenities (Services)
+python3 test_all.py --class amenities_facade
 ```
 
 ### 4. Tests d'un Module Spécifique (depuis le dossier du module)
@@ -94,9 +102,11 @@ python3 run_tests.py
 # Tests spécifiques dans un module
 cd app/api/v1/test
 python3 run_tests.py users_endpoints
+python3 run_tests.py amenities_endpoints
 
 cd app/services/test
 python3 run_tests.py facade
+python3 run_tests.py amenities_facade
 ```
 
 ### 5. Aide
@@ -146,11 +156,11 @@ Le lanceur global affiche :
 
 ## 📈 Statistiques Actuelles
 
-- **Total des tests** : 65+ (39 Models + 13 API + 13+ Services)
+- **Total des tests** : 85+ (39 Models + 23 API + 23+ Services)
 - **Modules testés** : 
   - ✅ **Models** : User, Amenity, Place, Review (39 tests)
-  - ✅ **API v1** : Users Endpoints (13 tests)
-  - ✅ **Services** : HBnB Facade (13+ tests)
+  - ✅ **API v1** : Users Endpoints (13 tests) + Amenities Endpoints (10 tests)
+  - ✅ **Services** : HBnB Facade (13+ tests) + Amenities Facade (10+ tests)
 - **Modules à développer** : Persistence
 - **Taux de réussite** : 100% ✅
 - **Couverture** : 100% des fonctionnalités développées
@@ -181,6 +191,20 @@ Le lanceur global affiche :
   - Succès avec même email
   - Échec utilisateur inexistant
   - Échec email déjà utilisé par autre utilisateur
+- ✅ Création d'amenities (POST)
+  - Succès avec données valides
+  - Échec avec données invalides
+  - Échec avec champs manquants
+- ✅ Récupération d'amenities (GET)
+  - Succès par ID
+  - Échec amenity inexistante
+- ✅ Liste des amenities (GET)
+  - Liste avec amenities
+  - Liste vide
+- ✅ Mise à jour d'amenities (PUT)
+  - Succès avec nouvelles données
+  - Échec amenity inexistante
+  - Échec avec données invalides
 - ✅ Gestion complète des codes d'erreur (400, 404, 201, 200)
 - ✅ Validation stricte des données d'entrée
 
@@ -198,6 +222,11 @@ Le lanceur global affiche :
   - Tous les cas de succès
   - Tous les cas d'échec
   - Cas limites et edge cases
+- ✅ Gestion des amenities
+  - Création d'amenities
+  - Récupération par ID
+  - Mise à jour avec validation
+  - Liste complète des amenities
 - ✅ Méthodes placeholder testées (get_place)
 
 ## 🆕 Nouveaux Tests Ajoutés
@@ -207,9 +236,23 @@ Le lanceur global affiche :
 - `test_get_all_users_empty_list()` - Test de la liste vide d'utilisateurs
 - `test_create_user_missing_fields()` - Validation des champs requis
 
+### **Tests Amenities (NOUVEAUX)**
+- `test_create_amenity_success()` - Création d'amenity avec succès
+- `test_create_amenity_invalid_data()` - Création avec données invalides
+- `test_get_amenity_success()` - Récupération par ID
+- `test_get_all_amenities()` - Liste des amenities
+- `test_update_amenity_success()` - Mise à jour avec succès
+- `test_update_amenity_invalid_data()` - Mise à jour avec données invalides
+
 ### **Tests Services Supplémentaires**  
 - `test_get_place()` - Test de récupération de lieu (méthode développée)
 - `test_update_user_with_same_email()` - Test de mise à jour avec email identique
+
+### **Tests Amenities Facade (NOUVEAUX)**
+- `test_create_amenity()` - Création via facade
+- `test_get_amenity()` - Récupération via facade
+- `test_get_all_amenities()` - Liste via facade
+- `test_update_amenity_success()` - Mise à jour via facade
 
 ## 🎯 Couverture de Tests Détaillée
 
@@ -222,6 +265,10 @@ Le lanceur global affiche :
 | `get_user_by_email()` | ✅ | Succès + inexistant |
 | `update_user()` | ✅ | Succès + inexistant + email dupliqué + même email |
 | `get_place()` | ✅ | ID inexistant |
+| `create_amenity()` | ✅ | Création normale |
+| `get_amenity()` | ✅ | Succès + inexistant |
+| `get_all_amenities()` | ✅ | Liste avec amenities |
+| `update_amenity()` | ✅ | Succès + inexistant + données invalides |
 
 ### **Endpoints API - 100% Couvert**
 | Endpoint | Méthode | Tests | Scénarios Testés |
@@ -230,6 +277,10 @@ Le lanceur global affiche :
 | `/api/v1/users/` | GET | ✅ | Liste avec utilisateurs + liste vide |
 | `/api/v1/users/<id>` | GET | ✅ | Succès + inexistant |
 | `/api/v1/users/<id>` | PUT | ✅ | Succès + inexistant + email dupliqué + même email |
+| `/api/v1/amenities/` | POST | ✅ | Succès + données invalides + champs manquants |
+| `/api/v1/amenities/` | GET | ✅ | Liste avec amenities + liste vide |
+| `/api/v1/amenities/<id>` | GET | ✅ | Succès + inexistant |
+| `/api/v1/amenities/<id>` | PUT | ✅ | Succès + inexistant + données invalides |
 
 ## 🚀 Prochaines Étapes
 
