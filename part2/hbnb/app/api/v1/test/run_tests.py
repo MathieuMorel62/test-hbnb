@@ -11,6 +11,7 @@ import os
 sys.path.append(os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))))
 
 from test_users_endpoints import TestUsersEndpoints
+from test_amenities_endpoints import TestAmenitiesEndpoints
 
 
 def run_api_v1_tests():
@@ -22,7 +23,8 @@ def run_api_v1_tests():
     
     # Classes de tests disponibles
     test_classes = [
-        TestUsersEndpoints
+        TestUsersEndpoints,
+        TestAmenitiesEndpoints
     ]
     
     # Créer une suite avec tous les tests
@@ -49,7 +51,9 @@ def run_specific_test(test_name):
     """Lance un test spécifique"""
     test_classes = {
         'users': TestUsersEndpoints,
-        'users_endpoints': TestUsersEndpoints
+        'users_endpoints': TestUsersEndpoints,
+        'amenities': TestAmenitiesEndpoints,
+        'amenities_endpoints': TestAmenitiesEndpoints
     }
     
     if test_name.lower() not in test_classes:
