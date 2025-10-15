@@ -21,8 +21,10 @@ from app.models.test.test_place import TestPlace
 from app.models.test.test_review import TestReview
 from app.api.v1.test.test_users_endpoints import TestUsersEndpoints
 from app.api.v1.test.test_amenities_endpoints import TestAmenitiesEndpoints
+from app.api.v1.test.test_places_endpoints import TestPlacesEndpoints
 from app.services.test.test_facade import TestHBnBFacade
 from app.services.test.test_amenities_facade import TestAmenitiesFacade
+
 
 class ColoredTestResult(unittest.TextTestResult):
     """Résultat de test avec couleurs et format amélioré"""
@@ -58,6 +60,7 @@ def discover_all_tests():
         'API': [
             (TestUsersEndpoints, "Tests Users Endpoints (API)"),
             (TestAmenitiesEndpoints, "Tests Amenities Endpoints (API)"),
+            (TestPlacesEndpoints, "Tests Places Endpoints (API)"),
         ],
         'Services': [
             (TestHBnBFacade, "Tests HBnB Facade (Services)"),
@@ -190,6 +193,7 @@ def run_specific_test(test_class_name):
         'review': TestReview,
         'users_endpoints': TestUsersEndpoints,
         'amenities_endpoints': TestAmenitiesEndpoints,
+        'places_endpoints': TestPlacesEndpoints,
         'facade': TestHBnBFacade,
         'amenities_facade': TestAmenitiesFacade
     }
@@ -218,7 +222,7 @@ def print_usage():
     print("  python test_all.py --class user       # Lance les tests d'une classe")
     print("  python test_all.py --help             # Affiche cette aide")
     print("\nModules disponibles: models, api, services, persistence")
-    print("Classes disponibles: user, amenity, place, review, users_endpoints, amenities_endpoints, facade, amenities_facade")
+    print("Classes disponibles: user, amenity, place, review, users_endpoints, amenities_endpoints, places_endpoints, facade, amenities_facade")
 
 
 if __name__ == "__main__":
