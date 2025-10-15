@@ -90,7 +90,7 @@ class TestPlace(unittest.TestCase):
         place.add_amenity(amenity)
 
         self.assertEqual(len(place.amenities), 1)
-        self.assertEqual(place.amenities[0].name, "Wi-Fi")
+        self.assertEqual(place.amenities[0], amenity.id)  # Vérifier l'ID au lieu de l'objet
 
 
 if __name__ == "__main__":
