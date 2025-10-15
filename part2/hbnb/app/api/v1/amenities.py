@@ -1,9 +1,7 @@
 from flask_restx import Namespace, Resource, fields
-from app.services.facade import HBnBFacade
+from app.services import facade
 
 api = Namespace('amenities', description="Amenities operations")
-
-facade = HBnBFacade()
 
 amenity_model = api.model('Amenity', {
     'name': fields.String(required=True, description="Name of the amenity")
