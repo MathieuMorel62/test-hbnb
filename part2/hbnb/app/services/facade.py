@@ -1,6 +1,7 @@
 from app.persistence.repository import InMemoryRepository
 from app.models.user import User
 from app.models.amenity import Amenity
+from app.models.place import Place
 
 
 class HBnBFacade:
@@ -102,7 +103,7 @@ class HBnBFacade:
             name = amenity_data['name']
             if not name or len(name.strip()) == 0 or len(name) > 50:
                 raise ValueError("The name of the equipment is required and must be less than 50 characters.")
-        
+        # Création de l'équipement
         amenity = Amenity(**amenity_data)
         self.amenity_repo.add(amenity)
         return amenity
@@ -146,10 +147,56 @@ class HBnBFacade:
                 name = amenity_data['name']
                 if not name or len(name.strip()) == 0 or len(name) > 50:
                     raise ValueError("The name of the equipment is required and must be less than 50 characters.")
-
+            # Mise à jour de l'équipement
             self.amenity_repo.update(amenity_id, amenity_data)
             return amenity
         return None
+
+    def create_place(self, place_data):
+        """
+        Crée un nouveau lieu.
+
+        Args:
+            place_data (dict): Données du lieu à créer.
+        
+        Returns:
+            Place: Le lieu créé.
+        
+        Raises:
+            ValueError: Si les données sont invalides.
+            TypeError: Si le propriétaire n'est pas valide.
+        """
+        # Validation du propriétaire 
+        owner = self.get_user(place_data.get('owner_id'))
+        if not owner:
+            raise ValueError("Owner not found")
+
+        # Récupération des amenities si fournis 
+        amenities = []
+        if 'amenities' in place_data:
+            for amenity_id in place_data['amenities']:
+                amenity = self.get_amenity(amenity_id)
+                if not amenity:
+                    raise ValueError(f"Amenity with id {amenity_id} not found")
+                amenities.append(amenity)
+
+        # Création du lieu avec les données fournies
+        place = Place(
+            title=place_data['title'],
+            description=place_data.get('description', ''),
+            price=float(place_data['price']),
+            latitude=float(place_data['latitude']),
+            longitude=float(place_data['longitude']),
+            owner=owner
+        )
+
+        # Ajout des amenities au lieu
+        for amenity in amenities:
+            place.add_amenity(amenity)
+
+        # Sauvegarde du lieu dans le repository
+        self.place_repo.add(place)
+        return place
 
     def get_place(self, place_id):
         """
@@ -163,8 +210,59 @@ class HBnBFacade:
         """
         return self.place_repo.get(place_id)
 
-    def create_place(self, place_data):
-        pass
+    def get_all_places(self):
+        """
+        Récupère tous les lieux.
+        
+        Returns:
+            list: Liste des lieux.
+        """
+        return self.place_repo.get_all()
+    
+    def update_place(self, place_id, place_data):
+        """
+        Met à jour un lieu.
+
+        Args:
+            place_id (str): Identifiant du lieu.
+            place_data (dict): Données du lieu à mettre à jour.
+        
+        Returns:
+            Place: Le lieu mis à jour.
+        """
+        place = self.get_place(place_id)
+        if not place:
+            return None
+        
+        # Validation des données numériques avant la mise à jour
+        if 'price' in place_data:
+            if float(place_data['price']) <= 0:
+                raise ValueError("The price must be a positive number.")
+        if 'latitude' in place_data:
+            if not (-90.0 <= float(place_data['latitude']) <= 90.0):
+                raise ValueError("The latitude must be between -90.0 and 90.0")
+        if 'longitude' in place_data:
+            if not (-180.0 <= float(place_data['longitude']) <= 180.0):
+                raise ValueError("The longitude must be between -180.0 and 180.0")
+        
+        # Mise à jour des amenities si fournis
+        if 'amenities' in place_data:
+            new_amenities = []
+            for amenity_id in place_data['amenities']:
+                amenity = self.get_amenity(amenity_id)
+                if not amenity:
+                    raise ValueError(f"Amenity with id {amenity_id} not found")
+                new_amenities.append(amenity_id)
+            place.amenities = new_amenities
+        
+        # Suppression des amenities de la donnée à mettre à jour
+        update_data = place_data.copy()
+        if 'amenities' in update_data:
+            del update_data['amenities']
+        
+        # Mise à jour du lieu dans le repo
+        self.place_repo.update(place_id, update_data)
+        return place
 
     def create_review(self, review_data):
         pass
