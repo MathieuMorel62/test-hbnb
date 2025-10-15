@@ -40,4 +40,4 @@ class Place(BaseModel):
 
     def add_amenity(self, amenity):
         """Ajoute une amenity à la liste des amenities"""
-        self.amenities.append(amenity)
+        self.amenities.append(amenity.id)
