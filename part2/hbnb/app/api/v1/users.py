@@ -1,9 +1,7 @@
 from flask_restx import Namespace, Resource, fields
-from app.services.facade import HBnBFacade
+from app.services import facade
 
 api = Namespace('users', description="Users operations")
-
-facade = HBnBFacade()
 
 user_model = api.model('User', {
     'first_name': fields.String(required=True, description="First name of the user"),
