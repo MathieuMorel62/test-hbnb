@@ -6,6 +6,8 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(
 
 from app.services.facade import HBnBFacade
 from app.models.user import User
+from app.models.place import Place
+from app.models.review import Review
 
 
 class TestHBnBFacade(unittest.TestCase):
@@ -163,6 +165,238 @@ class TestHBnBFacade(unittest.TestCase):
         self.assertIsNotNone(updated_user)
         self.assertEqual(updated_user.first_name, 'Updated')
         self.assertEqual(updated_user.email, 'test@example.com')
+
+
+    def test_create_review(self):
+        """Test création d'une review via facade"""
+        # Créer un utilisateur et un lieu pour la review
+        user_data = {
+            'first_name': 'John',
+            'last_name': 'Doe',
+            'email': 'john.doe@example.com'
+        }
+        user = self.facade.create_user(user_data)
+
+        place_data = {
+            'title': 'Test Place',
+            'description': 'Test Description',
+            'price': 100.0,
+            'latitude': 48.8566,
+            'longitude': 2.3522,
+            'owner_id': user.id
+        }
+        place = self.facade.create_place(place_data)
+
+        # Créer la review
+        review_data = {
+            'text': 'Great place!',
+            'rating': 5,
+            'user_id': user.id,
+            'place_id': place.id
+        }
+        
+        review = self.facade.create_review(review_data)
+        
+        self.assertIsInstance(review, Review)
+        self.assertEqual(review.text, 'Great place!')
+        self.assertEqual(review.rating, 5)
+        self.assertEqual(review.user.id, user.id)
+        self.assertEqual(review.place.id, place.id)
+
+    def test_get_review(self):
+        """Test récupération d'une review par ID"""
+        # Créer les données nécessaires
+        user = self.facade.create_user({
+            'first_name': 'Test',
+            'last_name': 'User',
+            'email': 'test@example.com'
+        })
+        place = self.facade.create_place({
+            'title': 'Test Place',
+            'description': 'Description',
+            'price': 100.0,
+            'latitude': 48.8566,
+            'longitude': 2.3522,
+            'owner_id': user.id
+        })
+        review_data = {
+            'text': 'Test review',
+            'rating': 4,
+            'user_id': user.id,
+            'place_id': place.id
+        }
+        created_review = self.facade.create_review(review_data)
+        
+        # Tester la récupération
+        retrieved_review = self.facade.get_review(created_review.id)
+        
+        self.assertIsNotNone(retrieved_review)
+        self.assertEqual(retrieved_review.id, created_review.id)
+        self.assertEqual(retrieved_review.text, 'Test review')
+        self.assertEqual(retrieved_review.rating, 4)
+
+    def test_get_all_reviews(self):
+        """Test récupération de toutes les reviews"""
+        # Créer les données nécessaires
+        user = self.facade.create_user({
+            'first_name': 'Test',
+            'last_name': 'User',
+            'email': 'test@example.com'
+        })
+        place = self.facade.create_place({
+            'title': 'Test Place',
+            'description': 'Description',
+            'price': 100.0,
+            'latitude': 48.8566,
+            'longitude': 2.3522,
+            'owner_id': user.id
+        })
+
+        # Créer plusieurs reviews
+        reviews_data = [
+            {'text': 'Review 1', 'rating': 4, 'user_id': user.id, 'place_id': place.id},
+            {'text': 'Review 2', 'rating': 5, 'user_id': user.id, 'place_id': place.id}
+        ]
+        
+        for review_data in reviews_data:
+            self.facade.create_review(review_data)
+        
+        all_reviews = self.facade.get_all_reviews()
+        
+        self.assertEqual(len(all_reviews), 2)
+        self.assertIsInstance(all_reviews[0], Review)
+        self.assertIsInstance(all_reviews[1], Review)
+
+    def test_get_reviews_by_place(self):
+        """Test récupération des reviews d'un lieu"""
+        # Créer les données nécessaires
+        user = self.facade.create_user({
+            'first_name': 'Test',
+            'last_name': 'User',
+            'email': 'test@example.com'
+        })
+        place = self.facade.create_place({
+            'title': 'Test Place',
+            'description': 'Description',
+            'price': 100.0,
+            'latitude': 48.8566,
+            'longitude': 2.3522,
+            'owner_id': user.id
+        })
+
+        # Créer des reviews pour le lieu
+        reviews_data = [
+            {'text': 'Review 1', 'rating': 4, 'user_id': user.id, 'place_id': place.id},
+            {'text': 'Review 2', 'rating': 5, 'user_id': user.id, 'place_id': place.id}
+        ]
+        
+        for review_data in reviews_data:
+            self.facade.create_review(review_data)
+        
+        place_reviews = self.facade.get_reviews_by_place(place.id)
+        
+        self.assertEqual(len(place_reviews), 2)
+        self.assertTrue(all(review.place.id == place.id for review in place_reviews))
+
+    def test_update_review(self):
+        """Test mise à jour d'une review"""
+        # Créer les données nécessaires
+        user = self.facade.create_user({
+            'first_name': 'Test',
+            'last_name': 'User',
+            'email': 'test@example.com'
+        })
+        place = self.facade.create_place({
+            'title': 'Test Place',
+            'description': 'Description',
+            'price': 100.0,
+            'latitude': 48.8566,
+            'longitude': 2.3522,
+            'owner_id': user.id
+        })
+        review_data = {
+            'text': 'Original review',
+            'rating': 3,
+            'user_id': user.id,
+            'place_id': place.id
+        }
+        created_review = self.facade.create_review(review_data)
+        
+        # Mettre à jour la review
+        update_data = {
+            'text': 'Updated review',
+            'rating': 4
+        }
+        
+        updated_review = self.facade.update_review(created_review.id, update_data)
+        
+        self.assertIsNotNone(updated_review)
+        self.assertEqual(updated_review.text, 'Updated review')
+        self.assertEqual(updated_review.rating, 4)
+
+    def test_delete_review(self):
+        """Test suppression d'une review"""
+        # Créer les données nécessaires
+        user = self.facade.create_user({
+            'first_name': 'Test',
+            'last_name': 'User',
+            'email': 'test@example.com'
+        })
+        place = self.facade.create_place({
+            'title': 'Test Place',
+            'description': 'Description',
+            'price': 100.0,
+            'latitude': 48.8566,
+            'longitude': 2.3522,
+            'owner_id': user.id
+        })
+        review_data = {
+            'text': 'Review to delete',
+            'rating': 4,
+            'user_id': user.id,
+            'place_id': place.id
+        }
+        created_review = self.facade.create_review(review_data)
+        
+        # Supprimer la review
+        result = self.facade.delete_review(created_review.id)
+        self.assertTrue(result)
+        
+        # Vérifier que la review n'existe plus
+        deleted_review = self.facade.get_review(created_review.id)
+        self.assertIsNone(deleted_review)
+
+    def test_update_review_invalid_rating(self):
+        """Test mise à jour d'une review avec une note invalide"""
+        # Créer les données nécessaires
+        user = self.facade.create_user({
+            'first_name': 'Test',
+            'last_name': 'User',
+            'email': 'test@example.com'
+        })
+        place = self.facade.create_place({
+            'title': 'Test Place',
+            'description': 'Description',
+            'price': 100.0,
+            'latitude': 48.8566,
+            'longitude': 2.3522,
+            'owner_id': user.id
+        })
+        review_data = {
+            'text': 'Original review',
+            'rating': 4,
+            'user_id': user.id,
+            'place_id': place.id
+        }
+        created_review = self.facade.create_review(review_data)
+        
+        # Essayer de mettre à jour avec une note invalide
+        update_data = {
+            'rating': 6  # Note invalide
+        }
+        
+        with self.assertRaises(ValueError):
+            self.facade.update_review(created_review.id, update_data)
 
 
 if __name__ == '__main__':
