@@ -22,8 +22,10 @@ from app.models.test.test_review import TestReview
 from app.api.v1.test.test_users_endpoints import TestUsersEndpoints
 from app.api.v1.test.test_amenities_endpoints import TestAmenitiesEndpoints
 from app.api.v1.test.test_places_endpoints import TestPlacesEndpoints
+from app.api.v1.test.test_reviews_endpoints import TestReviewsEndpoints
 from app.services.test.test_facade import TestHBnBFacade
 from app.services.test.test_amenities_facade import TestAmenitiesFacade
+
 
 
 class ColoredTestResult(unittest.TextTestResult):
@@ -61,6 +63,7 @@ def discover_all_tests():
             (TestUsersEndpoints, "Tests Users Endpoints (API)"),
             (TestAmenitiesEndpoints, "Tests Amenities Endpoints (API)"),
             (TestPlacesEndpoints, "Tests Places Endpoints (API)"),
+            (TestReviewsEndpoints, "Tests Reviews Endpoints (API)")
         ],
         'Services': [
             (TestHBnBFacade, "Tests HBnB Facade (Services)"),
@@ -193,6 +196,7 @@ def run_specific_test(test_class_name):
         'review': TestReview,
         'users_endpoints': TestUsersEndpoints,
         'amenities_endpoints': TestAmenitiesEndpoints,
+        'reviews_endpoints': TestReviewsEndpoints,
         'places_endpoints': TestPlacesEndpoints,
         'facade': TestHBnBFacade,
         'amenities_facade': TestAmenitiesFacade
