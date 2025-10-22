@@ -74,6 +74,8 @@ class InMemoryRepository(Repository):
         """
         if obj_id in self._storage:
             del self._storage[obj_id]
+            return True
+        return False
 
     def get_by_attribute(self, attr_name, attr_value):
         """
