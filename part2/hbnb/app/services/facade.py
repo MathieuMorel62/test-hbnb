@@ -2,20 +2,30 @@ from app.persistence.repository import InMemoryRepository
 from app.models.user import User
 from app.models.amenity import Amenity
 from app.models.place import Place
+from app.models.review import Review
 
 
 class HBnBFacade:
     """
     Facade pour la gestion des opérations de l'application.
     """
-    def __init__(self):
+    def __init__(self, repositories=None):
         """
         Initialise les dépôts en mémoire.
+        
+        Args:
+            repositories (dict): Dépôts à utiliser (pour les tests)
         """
-        self.user_repo = InMemoryRepository()
-        self.place_repo = InMemoryRepository()
-        self.review_repo = InMemoryRepository()
-        self.amenity_repo = InMemoryRepository()
+        if repositories:
+            self.user_repo = repositories.get('user_repo', InMemoryRepository())
+            self.place_repo = repositories.get('place_repo', InMemoryRepository())
+            self.review_repo = repositories.get('review_repo', InMemoryRepository())
+            self.amenity_repo = repositories.get('amenity_repo', InMemoryRepository())
+        else:
+            self.user_repo = InMemoryRepository()
+            self.place_repo = InMemoryRepository()
+            self.review_repo = InMemoryRepository()
+            self.amenity_repo = InMemoryRepository()
 
 
     def create_user(self, user_data):
@@ -42,6 +52,8 @@ class HBnBFacade:
         Returns:
             User: L'utilisateur trouvé.
         """
+        if not user_id:
+            return None
         return self.user_repo.get(user_id)
 
     def get_all_users(self):
@@ -118,6 +130,8 @@ class HBnBFacade:
         Returns:
             Amenity: L'équipement trouvé.
         """
+        if not amenity_id:
+            return None
         return self.amenity_repo.get(amenity_id)
     
     def get_all_amenities(self):
@@ -171,6 +185,20 @@ class HBnBFacade:
         if not owner:
             raise ValueError("Owner not found")
 
+        # Validation des données numériques
+        try:
+            price = float(place_data['price'])
+            if price <= 0:
+                raise ValueError("Price must be positive")
+            latitude = float(place_data['latitude'])
+            if not (-90.0 <= latitude <= 90.0):
+                raise ValueError("Latitude must be between -90 and 90")
+            longitude = float(place_data['longitude'])
+            if not (-180.0 <= longitude <= 180.0):
+                raise ValueError("Longitude must be between -180 and 180")
+        except (ValueError, TypeError):
+            raise ValueError("Invalid numeric values")
+
         # Récupération des amenities si fournis 
         amenities = []
         if 'amenities' in place_data:
@@ -184,9 +212,9 @@ class HBnBFacade:
         place = Place(
             title=place_data['title'],
             description=place_data.get('description', ''),
-            price=float(place_data['price']),
-            latitude=float(place_data['latitude']),
-            longitude=float(place_data['longitude']),
+            price=price,
+            latitude=latitude,
+            longitude=longitude,
             owner=owner
         )
 
@@ -208,6 +236,8 @@ class HBnBFacade:
         Returns:
             Place: Le lieu trouvé.
         """
+        if not place_id:
+            return None
         return self.place_repo.get(place_id)
 
     def get_all_places(self):
@@ -265,4 +295,128 @@ class HBnBFacade:
         return place
 
     def create_review(self, review_data):
-        pass
+        """
+        Crée une nouvelle review.
+
+        Args:
+            review_data (dict): Données de la review à créer.
+        
+        Returns:
+            Review: La review créée.
+        
+        Raises:
+            ValueError: Si les données sont invalides.
+        """
+        # Validation des données avant la création
+        place = self.get_place(review_data.get('place_id'))
+        if not place:
+            raise ValueError("Place not found")
+
+        # Validation de l'utilisateur
+        user = self.get_user(review_data.get('user_id'))
+        if not user:
+            raise ValueError("User not found")
+
+        # Validation du rating
+        try:
+            rating = int(review_data['rating'])
+            if not (1 <= rating <= 5):
+                raise ValueError("Rating must be between 1 and 5")
+        except (ValueError, TypeError):
+            raise ValueError("Rating must be an integer between 1 and 5")
+        
+        # Création de la review
+        review = Review(
+            text=review_data['text'],
+            rating=rating,
+            place=place,
+            user=user
+        )
+        # Sauvegarde de la review dans le repository
+        self.review_repo.add(review)
+        return review
+
+    
+    def get_review(self, review_id):
+        """
+        Récupère une review par son identifiant.
+
+        Args:
+            review_id (str): Identifiant de la review.
+        
+        Returns:
+            Review: La review trouvée.
+        """
+        if not review_id:
+            return None
+        return self.review_repo.get(review_id)
+
+    def get_all_reviews(self):
+        """
+        Récupère toutes les reviews.
+        
+        Returns:
+            list: Liste des reviews.
+        """
+        return self.review_repo.get_all()
+
+    def get_reviews_by_place(self, place_id):
+        """
+        Récupère toutes les reviews d'un lieu.
+
+        Args:
+            place_id (str): Identifiant du lieu.
+        
+        Returns:
+            list: Liste des reviews.
+        """
+        place = self.get_place(place_id)
+        if not place:
+            raise ValueError("Place not found")
+
+        return [review for review in self.review_repo.get_all()
+                if review.place.id == place_id]
+    
+    def update_review(self, review_id, review_data):
+        """
+        Met à jour une review.
+
+        Args:
+            review_id (str): Identifiant de la review.
+            review_data (dict): Données de la review à mettre à jour.
+        
+        Returns:
+            Review: La review mise à jour.
+        """
+        # Validation de la review
+        review = self.get_review(review_id)
+        if not review:
+            return None
+        
+        # Validation de la note
+        if 'rating' in review_data:
+            rating = int(review_data['rating'])
+            if not (1 <= rating <= 5):
+                raise ValueError("Rating must be between 1 and 5")
+        
+        # Mise à jour de la review dans le repository
+        self.review_repo.update(review_id, review_data)
+        return review
+    
+    def delete_review(self, review_id):
+        """
+        Supprime une review.
+
+        Args:
+            review_id (str): Identifiant de la review.
+        
+        Returns:
+            bool: True si la review a été supprimée, False sinon.
+        """
+        # Validation de la review
+        review = self.get_review(review_id)
+        if not review:
+            return False
+        
+        # Suppression de la review dans le repository
+        return self.review_repo.delete(review_id)
