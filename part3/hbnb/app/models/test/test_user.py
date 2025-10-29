@@ -17,7 +17,8 @@ class TestUser(unittest.TestCase):
         user = User(
             first_name="Alice",
             last_name="Dupont",
-            email="alice.dupont@example.com"
+            email="alice.dupont@example.com",
+            password="example_password"
         )
         self.assertEqual(user.first_name, "Alice")
         self.assertEqual(user.last_name, "Dupont")
@@ -33,7 +34,8 @@ class TestUser(unittest.TestCase):
             User(
                 first_name="Bob",
                 last_name="Martin",
-                email="adresse_invalide"
+                email="adresse_invalide",
+                password="example_password"
             )
 
     def test_long_first_name(self):
@@ -42,7 +44,8 @@ class TestUser(unittest.TestCase):
             User(
                 first_name="A" * 51,
                 last_name="Martin",
-                email="bob@example.com"
+                email="bob@example.com",
+                password="example_password"
             )
 
     def test_long_last_name(self):
@@ -51,27 +54,28 @@ class TestUser(unittest.TestCase):
             User(
                 first_name="Bob",
                 last_name="M" * 51,
-                email="bob@example.com"
+                email="bob@example.com",
+                password="example_password"
             )
 
     def test_empty_first_name(self):
         """Test first_name vide"""
         with self.assertRaises(ValueError):
-            User(first_name="", last_name="Dupont", email="test@example.com")
+            User(first_name="", last_name="Dupont", email="test@example.com", password="example_password")
 
     def test_empty_last_name(self):
         """Test last_name vide"""
         with self.assertRaises(ValueError):
-            User(first_name="Alice", last_name="", email="test@example.com")
+            User(first_name="Alice", last_name="", email="test@example.com", password="example_password")
 
     def test_user_admin(self):
         """Test utilisateur admin"""
-        user = User("Alice", "Dupont", "alice@example.com", is_admin=True)
+        user = User("Alice", "Dupont", "alice@example.com", "example_password", is_admin=True)
         self.assertTrue(user.is_admin)
 
     def test_user_update(self):
         """Test mise à jour utilisateur"""
-        user = User("Alice", "Dupont", "alice@example.com")
+        user = User("Alice", "Dupont", "alice@example.com", "example_password")
         old_updated_at = user.updated_at
         
         # Petite pause pour s'assurer que le timestamp change
@@ -86,7 +90,8 @@ class TestUser(unittest.TestCase):
         user = User(
             first_name="A" * 50,
             last_name="B" * 50,
-            email="test@example.com"
+            email="test@example.com",
+            password="example_password"
         )
         self.assertEqual(len(user.first_name), 50)
         self.assertEqual(len(user.last_name), 50)
@@ -100,7 +105,7 @@ class TestUser(unittest.TestCase):
         ]
         for email in valid_emails:
             with self.subTest(email=email):
-                user = User(first_name="Test", last_name="User", email=email)
+                user = User(first_name="Test", last_name="User", email=email, password="example_password")
                 self.assertEqual(user.email, email)
 
     def test_invalid_emails(self):
@@ -114,7 +119,93 @@ class TestUser(unittest.TestCase):
         for email in invalid_emails:
             with self.subTest(email=email):
                 with self.assertRaises(ValueError):
-                    User(first_name="Test", last_name="User", email=email)
+                    User(first_name="Test", last_name="User", email=email, password="example_password")
+
+    def test_password_is_hashed(self):
+        """Test que le mot de passe est bien haché"""
+        plain_password = "my_secure_password"
+        user = User(
+            first_name="Test",
+            last_name="User",
+            email="test@example.com",
+            password=plain_password
+        )
+        
+        # Vérifier que le mot de passe stocké n'est pas le mot de passe en clair
+        self.assertNotEqual(user.password, plain_password)
+        # Vérifier que le mot de passe haché commence par le préfixe bcrypt
+        self.assertTrue(user.password.startswith('$2b$'))
+        # Vérifier que le hash a une longueur appropriée
+        self.assertEqual(len(user.password), 60)
+
+    def test_verify_password_correct(self):
+        """Test de vérification d'un mot de passe correct"""
+        plain_password = "my_secure_password"
+        user = User(
+            first_name="Test",
+            last_name="User",
+            email="test@example.com",
+            password=plain_password
+        )
+        
+        # Vérifier que le mot de passe correct est validé
+        self.assertTrue(user.verify_password(plain_password))
+
+    def test_verify_password_incorrect(self):
+        """Test de vérification d'un mot de passe incorrect"""
+        user = User(
+            first_name="Test",
+            last_name="User",
+            email="test@example.com",
+            password="correct_password"
+        )
+        
+        # Vérifier que le mauvais mot de passe est rejeté
+        self.assertFalse(user.verify_password("wrong_password"))
+
+    def test_empty_password(self):
+        """Test création d'utilisateur avec mot de passe vide"""
+        with self.assertRaises(ValueError) as context:
+            User(
+                first_name="Test",
+                last_name="User",
+                email="test@example.com",
+                password=""
+            )
+        self.assertEqual(str(context.exception), "password is required")
+
+    def test_none_password(self):
+        """Test création d'utilisateur avec mot de passe None"""
+        with self.assertRaises(ValueError) as context:
+            User(
+                first_name="Test",
+                last_name="User",
+                email="test@example.com",
+                password=None
+            )
+        self.assertEqual(str(context.exception), "password is required")
+
+    def test_different_users_same_password_different_hashes(self):
+        """Test que deux utilisateurs avec le même mot de passe ont des hashes différents"""
+        password = "same_password"
+        user1 = User(
+            first_name="User1",
+            last_name="Test1",
+            email="user1@example.com",
+            password=password
+        )
+        user2 = User(
+            first_name="User2",
+            last_name="Test2",
+            email="user2@example.com",
+            password=password
+        )
+        
+        # Les hashes doivent être différents (bcrypt utilise un salt unique)
+        self.assertNotEqual(user1.password, user2.password)
+        # Mais les deux mots de passe doivent être validés correctement
+        self.assertTrue(user1.verify_password(password))
+        self.assertTrue(user2.verify_password(password))
 
 
 if __name__ == "__main__":
