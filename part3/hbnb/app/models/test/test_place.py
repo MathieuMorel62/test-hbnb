@@ -15,7 +15,7 @@ class TestPlace(unittest.TestCase):
 
     def setUp(self):
         """Configuration avant chaque test"""
-        self.user = User("Alice", "Smith", "alice@example.com")
+        self.user = User("Alice", "Smith", "alice@example.com", "password123")
 
     def test_place_creation(self):
         """Test de la création d'un lieu valide"""
