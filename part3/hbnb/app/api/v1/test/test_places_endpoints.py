@@ -29,7 +29,8 @@ class TestPlacesEndpoints(unittest.TestCase):
         self.user_data = {
             'first_name': 'John',
             'last_name': 'Doe',
-            'email': 'john.doe@example.com'
+            'email': 'john.doe@example.com',
+            'password': 'password123'
         }
         response = self.client.post('/api/v1/users/',
                                   data=json.dumps(self.user_data),
