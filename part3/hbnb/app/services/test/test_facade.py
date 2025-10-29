@@ -22,7 +22,8 @@ class TestHBnBFacade(unittest.TestCase):
         user_data = {
             'first_name': 'John',
             'last_name': 'Doe',
-            'email': 'john.doe@example.com'
+            'email': 'john.doe@example.com',
+            'password': 'password123'
         }
         
         user = self.facade.create_user(user_data)
@@ -38,7 +39,8 @@ class TestHBnBFacade(unittest.TestCase):
         user_data = {
             'first_name': 'Jane',
             'last_name': 'Smith',
-            'email': 'jane.smith@example.com'
+            'email': 'jane.smith@example.com',
+            'password': 'password123'
         }
         
         created_user = self.facade.create_user(user_data)
@@ -57,8 +59,8 @@ class TestHBnBFacade(unittest.TestCase):
         """Test récupération de tous les utilisateurs"""
         # Créer quelques utilisateurs
         users_data = [
-            {'first_name': 'User1', 'last_name': 'Test1', 'email': 'user1@test.com'},
-            {'first_name': 'User2', 'last_name': 'Test2', 'email': 'user2@test.com'}
+            {'first_name': 'User1', 'last_name': 'Test1', 'email': 'user1@test.com', 'password': 'password123'},
+            {'first_name': 'User2', 'last_name': 'Test2', 'email': 'user2@test.com', 'password': 'password123'}
         ]
         
         for user_data in users_data:
@@ -75,7 +77,8 @@ class TestHBnBFacade(unittest.TestCase):
         user_data = {
             'first_name': 'Test',
             'last_name': 'User',
-            'email': 'test.user@example.com'
+            'email': 'test.user@example.com',
+            'password': 'password123'
         }
         
         created_user = self.facade.create_user(user_data)
@@ -95,7 +98,8 @@ class TestHBnBFacade(unittest.TestCase):
         user_data = {
             'first_name': 'Original',
             'last_name': 'Name',
-            'email': 'original@example.com'
+            'email': 'original@example.com',
+            'password': 'password123'
         }
         
         created_user = self.facade.create_user(user_data)
@@ -121,8 +125,8 @@ class TestHBnBFacade(unittest.TestCase):
     def test_update_user_duplicate_email(self):
         """Test mise à jour avec email déjà utilisé"""
         # Créer deux utilisateurs
-        user1_data = {'first_name': 'User1', 'last_name': 'Test1', 'email': 'user1@test.com'}
-        user2_data = {'first_name': 'User2', 'last_name': 'Test2', 'email': 'user2@test.com'}
+        user1_data = {'first_name': 'User1', 'last_name': 'Test1', 'email': 'user1@test.com', 'password': 'password123'}
+        user2_data = {'first_name': 'User2', 'last_name': 'Test2', 'email': 'user2@test.com', 'password': 'password123'}
         
         user1 = self.facade.create_user(user1_data)
         user2 = self.facade.create_user(user2_data)
@@ -149,7 +153,8 @@ class TestHBnBFacade(unittest.TestCase):
         user_data = {
             'first_name': 'Test',
             'last_name': 'User',
-            'email': 'test@example.com'
+            'email': 'test@example.com',
+            'password': 'password123'
         }
         
         created_user = self.facade.create_user(user_data)
@@ -173,7 +178,8 @@ class TestHBnBFacade(unittest.TestCase):
         user_data = {
             'first_name': 'John',
             'last_name': 'Doe',
-            'email': 'john.doe@example.com'
+            'email': 'john.doe@example.com',
+            'password': 'password123'
         }
         user = self.facade.create_user(user_data)
 
@@ -209,7 +215,8 @@ class TestHBnBFacade(unittest.TestCase):
         user = self.facade.create_user({
             'first_name': 'Test',
             'last_name': 'User',
-            'email': 'test@example.com'
+            'email': 'test@example.com',
+            'password': 'password123'
         })
         place = self.facade.create_place({
             'title': 'Test Place',
@@ -241,7 +248,8 @@ class TestHBnBFacade(unittest.TestCase):
         user = self.facade.create_user({
             'first_name': 'Test',
             'last_name': 'User',
-            'email': 'test@example.com'
+            'email': 'test@example.com',
+            'password': 'password123'
         })
         place = self.facade.create_place({
             'title': 'Test Place',
@@ -273,7 +281,8 @@ class TestHBnBFacade(unittest.TestCase):
         user = self.facade.create_user({
             'first_name': 'Test',
             'last_name': 'User',
-            'email': 'test@example.com'
+            'email': 'test@example.com',
+            'password': 'password123'
         })
         place = self.facade.create_place({
             'title': 'Test Place',
@@ -304,7 +313,8 @@ class TestHBnBFacade(unittest.TestCase):
         user = self.facade.create_user({
             'first_name': 'Test',
             'last_name': 'User',
-            'email': 'test@example.com'
+            'email': 'test@example.com',
+            'password': 'password123'
         })
         place = self.facade.create_place({
             'title': 'Test Place',
@@ -340,7 +350,8 @@ class TestHBnBFacade(unittest.TestCase):
         user = self.facade.create_user({
             'first_name': 'Test',
             'last_name': 'User',
-            'email': 'test@example.com'
+            'email': 'test@example.com',
+            'password': 'password123'
         })
         place = self.facade.create_place({
             'title': 'Test Place',
@@ -372,7 +383,8 @@ class TestHBnBFacade(unittest.TestCase):
         user = self.facade.create_user({
             'first_name': 'Test',
             'last_name': 'User',
-            'email': 'test@example.com'
+            'email': 'test@example.com',
+            'password': 'password123'
         })
         place = self.facade.create_place({
             'title': 'Test Place',
