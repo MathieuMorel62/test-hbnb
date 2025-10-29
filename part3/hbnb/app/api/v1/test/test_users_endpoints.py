@@ -18,9 +18,9 @@ class TestUsersEndpoints(unittest.TestCase):
         self.app_context = self.app.app_context()
         self.app_context.push()
         
-        # Créer une nouvelle instance du facade pour chaque test
+        # Crée une nouvelle instance du facade pour chaque test
         from app.api.v1.users import facade
-        facade.user_repo._storage.clear()  # Nettoyer le repository
+        facade.user_repo._storage.clear()  # Nettoie le repository
 
     def tearDown(self):
         """Nettoyage après chaque test"""
@@ -31,7 +31,8 @@ class TestUsersEndpoints(unittest.TestCase):
         user_data = {
             'first_name': 'John',
             'last_name': 'Doe',
-            'email': 'john.doe@example.com'
+            'email': 'john.doe@example.com',
+            'password': 'password123'
         }
         
         response = self.client.post('/api/v1/users/', 
@@ -53,15 +54,16 @@ class TestUsersEndpoints(unittest.TestCase):
         user_data = {
             'first_name': 'John',
             'last_name': 'Doe',
-            'email': 'john.doe@example.com'
+            'email': 'john.doe@example.com',
+            'password': 'password123'
         }
         
-        # Créer le premier utilisateur
+        # Crée un nouvel utilisateur
         self.client.post('/api/v1/users/', 
                         data=json.dumps(user_data),
                         content_type='application/json')
         
-        # Essayer de créer un autre avec le même email
+        # Essaye de créer un autre utilisateur avec le même email
         response = self.client.post('/api/v1/users/', 
                                   data=json.dumps(user_data),
                                   content_type='application/json')
@@ -86,11 +88,12 @@ class TestUsersEndpoints(unittest.TestCase):
 
     def test_get_user_success(self):
         """Test récupération d'utilisateur par ID"""
-        # Créer un utilisateur d'abord
+        # Crée un utilisateur d'abord
         user_data = {
             'first_name': 'Jane',
             'last_name': 'Smith',
-            'email': 'jane.smith@example.com'
+            'email': 'jane.smith@example.com',
+            'password': 'password123'
         }
         
         create_response = self.client.post('/api/v1/users/', 
@@ -100,7 +103,7 @@ class TestUsersEndpoints(unittest.TestCase):
         created_user = json.loads(create_response.data)
         user_id = created_user['id']
         
-        # Récupérer l'utilisateur
+        # Récupére l'utilisateur
         response = self.client.get(f'/api/v1/users/{user_id}')
         
         self.assertEqual(response.status_code, 200)
@@ -120,10 +123,10 @@ class TestUsersEndpoints(unittest.TestCase):
 
     def test_get_all_users(self):
         """Test récupération de tous les utilisateurs"""
-        # Créer quelques utilisateurs
+        # Crée quelques utilisateurs
         users_data = [
-            {'first_name': 'User1', 'last_name': 'Test1', 'email': 'user1@test.com'},
-            {'first_name': 'User2', 'last_name': 'Test2', 'email': 'user2@test.com'}
+            {'first_name': 'User1', 'last_name': 'Test1', 'email': 'user1@test.com', 'password': 'password123'},
+            {'first_name': 'User2', 'last_name': 'Test2', 'email': 'user2@test.com', 'password': 'password123'}
         ]
         
         for user_data in users_data:
@@ -131,7 +134,7 @@ class TestUsersEndpoints(unittest.TestCase):
                            data=json.dumps(user_data),
                            content_type='application/json')
         
-        # Récupérer tous les utilisateurs
+        # Récupère tous les utilisateurs
         response = self.client.get('/api/v1/users/')
         
         self.assertEqual(response.status_code, 200)
@@ -141,11 +144,12 @@ class TestUsersEndpoints(unittest.TestCase):
 
     def test_update_user_success(self):
         """Test mise à jour d'utilisateur avec succès"""
-        # Créer un utilisateur d'abord
+        # Crée un nouvel utilisateur d'abord
         user_data = {
             'first_name': 'Original',
             'last_name': 'Name',
-            'email': 'original@example.com'
+            'email': 'original@example.com',
+            'password': 'password123'
         }
         
         create_response = self.client.post('/api/v1/users/', 
@@ -155,7 +159,7 @@ class TestUsersEndpoints(unittest.TestCase):
         created_user = json.loads(create_response.data)
         user_id = created_user['id']
         
-        # Mettre à jour l'utilisateur
+        # Mise à jour de l'utilisateur
         update_data = {
             'first_name': 'Updated',
             'last_name': 'Name',
@@ -189,9 +193,9 @@ class TestUsersEndpoints(unittest.TestCase):
 
     def test_update_user_duplicate_email(self):
         """Test mise à jour avec email déjà utilisé"""
-        # Créer deux utilisateurs
-        user1_data = {'first_name': 'User1', 'last_name': 'Test1', 'email': 'user1@test.com'}
-        user2_data = {'first_name': 'User2', 'last_name': 'Test2', 'email': 'user2@test.com'}
+        # Crée deux utilisateurs
+        user1_data = {'first_name': 'User1', 'last_name': 'Test1', 'email': 'user1@test.com', 'password': 'password123'}
+        user2_data = {'first_name': 'User2', 'last_name': 'Test2', 'email': 'user2@test.com', 'password': 'password123'}
         
         create_response1 = self.client.post('/api/v1/users/', 
                                           data=json.dumps(user1_data),
@@ -201,13 +205,13 @@ class TestUsersEndpoints(unittest.TestCase):
                                           data=json.dumps(user2_data),
                                           content_type='application/json')
         
-        # Vérifier que les créations ont réussi
+        # Vérifie que les créations ont réussies
         self.assertEqual(create_response1.status_code, 201)
         self.assertEqual(create_response2.status_code, 201)
         
         user1_id = json.loads(create_response1.data)['id']
         
-        # Essayer de mettre à jour user1 avec l'email de user2
+        # Essaye de mettre à jour user1 avec l'email de user2
         update_data = {
             'first_name': 'User1',
             'last_name': 'Test1',
@@ -224,11 +228,12 @@ class TestUsersEndpoints(unittest.TestCase):
 
     def test_update_user_same_email(self):
         """Test mise à jour avec le même email (doit fonctionner)"""
-        # Créer un utilisateur
+        # Crée un utilisateur
         user_data = {
             'first_name': 'Original',
             'last_name': 'Name',
-            'email': 'original@example.com'
+            'email': 'original@example.com',
+            'password': 'password123'
         }
         
         create_response = self.client.post('/api/v1/users/', 
@@ -238,7 +243,7 @@ class TestUsersEndpoints(unittest.TestCase):
         created_user = json.loads(create_response.data)
         user_id = created_user['id']
         
-        # Mettre à jour avec le même email
+        # Mise à jour avec le même email
         update_data = {
             'first_name': 'Updated',
             'last_name': 'Name',
@@ -276,6 +281,129 @@ class TestUsersEndpoints(unittest.TestCase):
                                   content_type='application/json')
         
         self.assertEqual(response.status_code, 400)
+
+    def test_password_not_returned_in_create_response(self):
+        """Test que le mot de passe n'est pas retourné lors de la création"""
+        user_data = {
+            'first_name': 'Secure',
+            'last_name': 'User',
+            'email': 'secure@example.com',
+            'password': 'super_secret_password'
+        }
+        
+        response = self.client.post('/api/v1/users/', 
+                                  data=json.dumps(user_data),
+                                  content_type='application/json')
+        
+        self.assertEqual(response.status_code, 201)
+        data = json.loads(response.data)
+        
+        # Vérifie que le mot de passe n'est pas dans la réponse
+        self.assertNotIn('password', data)
+        
+        # Vérifie que les autres champs sont présents
+        self.assertIn('id', data)
+        self.assertIn('first_name', data)
+        self.assertIn('last_name', data)
+        self.assertIn('email', data)
+
+    def test_password_not_returned_in_get_response(self):
+        """Test que le mot de passe n'est pas retourné lors de la récupération"""
+        # Crée un utilisateur
+        user_data = {
+            'first_name': 'Test',
+            'last_name': 'Password',
+            'email': 'testpass@example.com',
+            'password': 'my_password_123'
+        }
+        
+        create_response = self.client.post('/api/v1/users/', 
+                                         data=json.dumps(user_data),
+                                         content_type='application/json')
+        
+        created_user = json.loads(create_response.data)
+        user_id = created_user['id']
+        
+        # Récupére l'utilisateur
+        response = self.client.get(f'/api/v1/users/{user_id}')
+        
+        self.assertEqual(response.status_code, 200)
+        data = json.loads(response.data)
+        
+        # Vérifie que le mot de passe n'est pas dans la réponse
+        self.assertNotIn('password', data)
+
+    def test_password_not_returned_in_list_response(self):
+        """Test que les mots de passe ne sont pas retournés dans la liste"""
+        # Crée plusieurs utilisateurs
+        users_data = [
+            {'first_name': 'User1', 'last_name': 'Pass1', 'email': 'user1pass@test.com', 'password': 'pass1'},
+            {'first_name': 'User2', 'last_name': 'Pass2', 'email': 'user2pass@test.com', 'password': 'pass2'}
+        ]
+        
+        for user_data in users_data:
+            self.client.post('/api/v1/users/', 
+                           data=json.dumps(user_data),
+                           content_type='application/json')
+        
+        # Récupère tous les utilisateurs
+        response = self.client.get('/api/v1/users/')
+        
+        self.assertEqual(response.status_code, 200)
+        data = json.loads(response.data)
+        
+        # Vérifie qu'aucun utilisateur ne contient de mot de passe
+        for user in data:
+            self.assertNotIn('password', user)
+
+    def test_create_user_without_password(self):
+        """Test création d'utilisateur sans mot de passe"""
+        user_data = {
+            'first_name': 'No',
+            'last_name': 'Password',
+            'email': 'nopass@example.com'
+        }
+        
+        response = self.client.post('/api/v1/users/', 
+                                  data=json.dumps(user_data),
+                                  content_type='application/json')
+        
+        # Doit échouer car le mot de passe est requis
+        self.assertEqual(response.status_code, 400)
+
+    def test_password_not_returned_in_update_response(self):
+        """Test que le mot de passe n'est pas retourné lors de la mise à jour"""
+        # Crée un nouvel utilisateur
+        user_data = {
+            'first_name': 'Update',
+            'last_name': 'Test',
+            'email': 'update@example.com',
+            'password': 'initial_password'
+        }
+        
+        create_response = self.client.post('/api/v1/users/', 
+                                         data=json.dumps(user_data),
+                                         content_type='application/json')
+        
+        created_user = json.loads(create_response.data)
+        user_id = created_user['id']
+        
+        # Mise à jour de l'utilisateur
+        update_data = {
+            'first_name': 'Updated',
+            'last_name': 'Test',
+            'email': 'update@example.com'
+        }
+        
+        response = self.client.put(f'/api/v1/users/{user_id}', 
+                                 data=json.dumps(update_data),
+                                 content_type='application/json')
+        
+        self.assertEqual(response.status_code, 200)
+        data = json.loads(response.data)
+        
+        # Vérifie que le mot de passe n'est pas dans la réponse
+        self.assertNotIn('password', data)
 
 
 if __name__ == '__main__':
