@@ -14,7 +14,7 @@ class TestReview(unittest.TestCase):
 
     def setUp(self):
         """Configuration avant chaque test"""
-        self.user = User("Emma", "Jones", "emma.jones@example.com")
+        self.user = User("Emma", "Jones", "emma.jones@example.com", "password123")
         self.place = Place("Sunny Apartment", "Light and quiet", 75.0, 45.75, 4.85, self.user)
 
     def test_review_creation(self):
