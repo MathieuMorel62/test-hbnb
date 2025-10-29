@@ -46,7 +46,8 @@ class TestReviewsEndpoints(unittest.TestCase):
             user = facade.create_user({
                 "first_name": "John",
                 "last_name": "Doe",
-                "email": "john.doe@example.com"
+                "email": "john.doe@example.com",
+                "password": "password123"
             })
             self.user_id = user.id
             print("User created with ID:", self.user_id)
