@@ -196,7 +196,7 @@ class HBnBFacade:
             longitude = float(place_data['longitude'])
             if not (-180.0 <= longitude <= 180.0):
                 raise ValueError("Longitude must be between -180 and 180")
-        except (ValueError, TypeError):
+        except (ValueError, TypeError, KeyError):
             raise ValueError("Invalid numeric values")
 
         # Récupération des amenities si fournis 
