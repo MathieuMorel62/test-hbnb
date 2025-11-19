@@ -36,6 +36,9 @@ class TestPlacesEndpoints(unittest.TestCase):
                                   data=json.dumps(self.user_data),
                                   content_type='application/json')
         self.user = json.loads(response.data)
+        
+        # Obtenir un token JWT pour cet utilisateur
+        self.token = self.get_auth_token('john.doe@example.com', 'password123')
 
         # Créer des amenities
         self.amenities = []
@@ -45,6 +48,16 @@ class TestPlacesEndpoints(unittest.TestCase):
                                       data=json.dumps({'name': name}),
                                       content_type='application/json')
             self.amenities.append(json.loads(response.data))
+    
+    def get_auth_token(self, email='john.doe@example.com', password='password123'):
+        """Helper pour obtenir un token JWT"""
+        login_data = {'email': email, 'password': password}
+        response = self.client.post('/api/v1/auth/login',
+                                   data=json.dumps(login_data),
+                                   content_type='application/json')
+        if response.status_code == 200:
+            return json.loads(response.data)['access_token']
+        return None
 
     def tearDown(self):
         """Nettoyage après chaque test"""
@@ -58,30 +71,31 @@ class TestPlacesEndpoints(unittest.TestCase):
             'price': 100.0,
             'latitude': 37.7749,
             'longitude': -122.4194,
-            'owner_id': self.user['id'],
             'amenities': [self.amenities[0]['id'], self.amenities[1]['id']]
         }
         
         response = self.client.post('/api/v1/places/',
                                   data=json.dumps(place_data),
-                                  content_type='application/json')
+                                  content_type='application/json',
+                                  headers={'Authorization': f'Bearer {self.token}'})
         
         self.assertEqual(response.status_code, 201)
         data = json.loads(response.data)
         self.assertIn('id', data)
         self.assertEqual(data['title'], 'Cozy Apartment')
         self.assertEqual(data['price'], 100.0)
-        self.assertEqual(data['owner_id'], self.user['id'])
+        self.assertEqual(data['owner_id'], self.user['id'])  # owner_id est défini automatiquement depuis le JWT
 
     def test_create_place_invalid_owner(self):
-        """Test création d'une place avec propriétaire invalide"""
+        """Test création d'une place - owner_id est maintenant défini automatiquement depuis le JWT"""
+        # Ce test n'a plus de sens car owner_id est défini automatiquement
+        # On teste plutôt qu'un token invalide échoue
         place_data = {
             'title': 'Invalid Place',
             'description': 'Should fail',
             'price': 100.0,
             'latitude': 37.7749,
             'longitude': -122.4194,
-            'owner_id': 'invalid-id',
             'amenities': [self.amenities[0]['id']]
         }
         
@@ -89,9 +103,8 @@ class TestPlacesEndpoints(unittest.TestCase):
                                   data=json.dumps(place_data),
                                   content_type='application/json')
         
-        self.assertEqual(response.status_code, 400)
-        data = json.loads(response.data)
-        self.assertEqual(data['error'], 'Owner not found')
+        # Doit échouer car pas de token JWT
+        self.assertEqual(response.status_code, 401)
 
     def test_create_place_invalid_price(self):
         """Test création d'une place avec prix invalide"""
@@ -101,13 +114,13 @@ class TestPlacesEndpoints(unittest.TestCase):
             'price': -100.0,
             'latitude': 37.7749,
             'longitude': -122.4194,
-            'owner_id': self.user['id'],
             'amenities': [self.amenities[0]['id']]
         }
         
         response = self.client.post('/api/v1/places/',
                                   data=json.dumps(place_data),
-                                  content_type='application/json')
+                                  content_type='application/json',
+                                  headers={'Authorization': f'Bearer {self.token}'})
         
         self.assertEqual(response.status_code, 400)
 
@@ -120,13 +133,13 @@ class TestPlacesEndpoints(unittest.TestCase):
             'price': 100.0,
             'latitude': 37.7749,
             'longitude': -122.4194,
-            'owner_id': self.user['id'],
             'amenities': [self.amenities[0]['id']]
         }
         
         create_response = self.client.post('/api/v1/places/',
                                          data=json.dumps(place_data),
-                                         content_type='application/json')
+                                         content_type='application/json',
+                                         headers={'Authorization': f'Bearer {self.token}'})
         
         created_place = json.loads(create_response.data)
         
@@ -149,13 +162,13 @@ class TestPlacesEndpoints(unittest.TestCase):
             'price': 100.0,
             'latitude': 37.7749,
             'longitude': -122.4194,
-            'owner_id': self.user['id'],
             'amenities': [self.amenities[0]['id']]
         }
         
         self.client.post('/api/v1/places/',
                         data=json.dumps(place_data),
-                        content_type='application/json')
+                        content_type='application/json',
+                        headers={'Authorization': f'Bearer {self.token}'})
         
         # Récupérer toutes les places
         response = self.client.get('/api/v1/places/')
@@ -175,13 +188,13 @@ class TestPlacesEndpoints(unittest.TestCase):
             'price': 100.0,
             'latitude': 37.7749,
             'longitude': -122.4194,
-            'owner_id': self.user['id'],
             'amenities': [self.amenities[0]['id']]
         }
         
         create_response = self.client.post('/api/v1/places/',
                                          data=json.dumps(place_data),
-                                         content_type='application/json')
+                                         content_type='application/json',
+                                         headers={'Authorization': f'Bearer {self.token}'})
         
         created_place = json.loads(create_response.data)
         
@@ -194,7 +207,8 @@ class TestPlacesEndpoints(unittest.TestCase):
         
         response = self.client.put(f'/api/v1/places/{created_place["id"]}',
                                  data=json.dumps(update_data),
-                                 content_type='application/json')
+                                 content_type='application/json',
+                                 headers={'Authorization': f'Bearer {self.token}'})
         
         self.assertEqual(response.status_code, 200)
         
@@ -213,7 +227,8 @@ class TestPlacesEndpoints(unittest.TestCase):
         
         response = self.client.put('/api/v1/places/nonexistent-id',
                                  data=json.dumps(update_data),
-                                 content_type='application/json')
+                                 content_type='application/json',
+                                 headers={'Authorization': f'Bearer {self.token}'})
         
         self.assertEqual(response.status_code, 404)
 
@@ -226,13 +241,13 @@ class TestPlacesEndpoints(unittest.TestCase):
             'price': 100.0,
             'latitude': 37.7749,
             'longitude': -122.4194,
-            'owner_id': self.user['id'],
             'amenities': [self.amenities[0]['id']]
         }
         
         create_response = self.client.post('/api/v1/places/',
                                          data=json.dumps(place_data),
-                                         content_type='application/json')
+                                         content_type='application/json',
+                                         headers={'Authorization': f'Bearer {self.token}'})
         
         created_place = json.loads(create_response.data)
         
@@ -244,7 +259,8 @@ class TestPlacesEndpoints(unittest.TestCase):
         
         response = self.client.put(f'/api/v1/places/{created_place["id"]}',
                                  data=json.dumps(update_data),
-                                 content_type='application/json')
+                                 content_type='application/json',
+                                 headers={'Authorization': f'Bearer {self.token}'})
         
         self.assertEqual(response.status_code, 400)
 
@@ -256,13 +272,13 @@ class TestPlacesEndpoints(unittest.TestCase):
             'price': 100.0,
             'latitude': 91.0,  # Invalid latitude
             'longitude': -122.4194,
-            'owner_id': self.user['id'],
             'amenities': [self.amenities[0]['id']]
         }
         
         response = self.client.post('/api/v1/places/',
                                 data=json.dumps(place_data),
-                                content_type='application/json')
+                                content_type='application/json',
+                                headers={'Authorization': f'Bearer {self.token}'})
         
         self.assertEqual(response.status_code, 400)
 
@@ -274,13 +290,13 @@ class TestPlacesEndpoints(unittest.TestCase):
             'price': 100.0,
             'latitude': 37.7749,
             'longitude': -122.4194,
-            'owner_id': self.user['id'],
             'amenities': ['invalid-amenity-id']
         }
         
         response = self.client.post('/api/v1/places/',
                                 data=json.dumps(place_data),
-                                content_type='application/json')
+                                content_type='application/json',
+                                headers={'Authorization': f'Bearer {self.token}'})
         
         self.assertEqual(response.status_code, 400)
 
@@ -301,13 +317,13 @@ class TestPlacesEndpoints(unittest.TestCase):
             'price': 100.0,
             'latitude': 37.7749,
             'longitude': -122.4194,
-            'owner_id': self.user['id'],
             'amenities': [self.amenities[0]['id']]
         }
         
         create_response = self.client.post('/api/v1/places/',
                                         data=json.dumps(place_data),
-                                        content_type='application/json')
+                                        content_type='application/json',
+                                        headers={'Authorization': f'Bearer {self.token}'})
         
         created_place = json.loads(create_response.data)
         
@@ -318,7 +334,8 @@ class TestPlacesEndpoints(unittest.TestCase):
         
         response = self.client.put(f'/api/v1/places/{created_place["id"]}',
                                 data=json.dumps(update_data),
-                                content_type='application/json')
+                                content_type='application/json',
+                                headers={'Authorization': f'Bearer {self.token}'})
         
         self.assertEqual(response.status_code, 400)
 
@@ -331,13 +348,13 @@ class TestPlacesEndpoints(unittest.TestCase):
             'price': 100.0,
             'latitude': 37.7749,
             'longitude': -122.4194,
-            'owner_id': self.user['id'],
             'amenities': [self.amenities[0]['id']]
         }
         
         create_response = self.client.post('/api/v1/places/',
                                         data=json.dumps(place_data),
-                                        content_type='application/json')
+                                        content_type='application/json',
+                                        headers={'Authorization': f'Bearer {self.token}'})
         
         created_place = json.loads(create_response.data)
         
@@ -348,7 +365,8 @@ class TestPlacesEndpoints(unittest.TestCase):
         
         response = self.client.put(f'/api/v1/places/{created_place["id"]}',
                                 data=json.dumps(update_data),
-                                content_type='application/json')
+                                content_type='application/json',
+                                headers={'Authorization': f'Bearer {self.token}'})
         
         self.assertEqual(response.status_code, 400)
 
@@ -360,12 +378,12 @@ class TestPlacesEndpoints(unittest.TestCase):
             'price': 100.0,
             'latitude': 37.7749,
             'longitude': -122.4194,
-            'owner_id': self.user['id'],
             'amenities': [self.amenities[0]['id']]
         }
         response = self.client.post('/api/v1/places/',
                                 data=json.dumps(place_data),
-                                content_type='application/json')
+                                content_type='application/json',
+                                headers={'Authorization': f'Bearer {self.token}'})
         self.assertEqual(response.status_code, 201)
 
     def test_description_none(self):
@@ -376,12 +394,12 @@ class TestPlacesEndpoints(unittest.TestCase):
             'price': 100.0,
             'latitude': 37.7749,
             'longitude': -122.4194,
-            'owner_id': self.user['id'],
             'amenities': [self.amenities[0]['id']]
         }
         response = self.client.post('/api/v1/places/',
                                 data=json.dumps(place_data),
-                                content_type='application/json')
+                                content_type='application/json',
+                                headers={'Authorization': f'Bearer {self.token}'})
         self.assertEqual(response.status_code, 201)
     
     def test_invalid_price_type(self):
@@ -391,12 +409,12 @@ class TestPlacesEndpoints(unittest.TestCase):
             'price': "not a number",
             'latitude': 37.7749,
             'longitude': -122.4194,
-            'owner_id': self.user['id'],
             'amenities': [self.amenities[0]['id']]
         }
         response = self.client.post('/api/v1/places/',
                                 data=json.dumps(place_data),
-                                content_type='application/json')
+                                content_type='application/json',
+                                headers={'Authorization': f'Bearer {self.token}'})
         self.assertEqual(response.status_code, 400)
 
     def test_invalid_coordinates_type(self):
@@ -406,27 +424,104 @@ class TestPlacesEndpoints(unittest.TestCase):
             'price': 100.0,
             'latitude': "not a number",
             'longitude': -122.4194,
-            'owner_id': self.user['id'],
             'amenities': [self.amenities[0]['id']]
         }
         response = self.client.post('/api/v1/places/',
                                 data=json.dumps(place_data),
-                                content_type='application/json')
+                                content_type='application/json',
+                                headers={'Authorization': f'Bearer {self.token}'})
         self.assertEqual(response.status_code, 400)
 
     def test_malformed_json(self):
         """Test avec un JSON mal formé"""
         response = self.client.post('/api/v1/places/',
                                 data="{'bad': json}",
-                                content_type='application/json')
+                                content_type='application/json',
+                                headers={'Authorization': f'Bearer {self.token}'})
         self.assertEqual(response.status_code, 400)
     
     def test_empty_json(self):
         """Test avec un JSON vide"""
         response = self.client.post('/api/v1/places/',
                                 data="{}",
-                                content_type='application/json')
+                                content_type='application/json',
+                                headers={'Authorization': f'Bearer {self.token}'})
         self.assertEqual(response.status_code, 400)
+    
+    def test_update_place_unauthorized(self):
+        """Test qu'on ne peut pas modifier une place qui n'est pas la nôtre"""
+        # Créer une place avec l'utilisateur actuel
+        place_data = {
+            'title': 'My Place',
+            'description': 'My description',
+            'price': 100.0,
+            'latitude': 37.7749,
+            'longitude': -122.4194,
+            'amenities': [self.amenities[0]['id']]
+        }
+        create_response = self.client.post('/api/v1/places/',
+                                         data=json.dumps(place_data),
+                                         content_type='application/json',
+                                         headers={'Authorization': f'Bearer {self.token}'})
+        place_id = json.loads(create_response.data)['id']
+        
+        # Créer un autre utilisateur et obtenir son token
+        from app.services import facade
+        other_user_data = {
+            'first_name': 'Other',
+            'last_name': 'User',
+            'email': 'other@example.com',
+            'password': 'password123'
+        }
+        other_user_response = self.client.post('/api/v1/users/',
+                                               data=json.dumps(other_user_data),
+                                               content_type='application/json')
+        other_user = json.loads(other_user_response.data)
+        other_token = self.get_auth_token('other@example.com', 'password123')
+        
+        # L'autre utilisateur essaie de modifier la place
+        update_data = {
+            'title': 'Hacked Place',
+            'price': 999.0
+        }
+        response = self.client.put(f'/api/v1/places/{place_id}',
+                                 data=json.dumps(update_data),
+                                 content_type='application/json',
+                                 headers={'Authorization': f'Bearer {other_token}'})
+        
+        # Doit échouer car ce n'est pas sa place
+        self.assertEqual(response.status_code, 403)
+        data = json.loads(response.data)
+        self.assertEqual(data['error'], 'Unauthorized action')
+
+    def test_update_place_without_token(self):
+        """Test qu'on ne peut pas modifier une place sans token JWT"""
+        # Créer une place d'abord
+        place_data = {
+            'title': 'My Place',
+            'description': 'My description',
+            'price': 100.0,
+            'latitude': 37.7749,
+            'longitude': -122.4194,
+            'amenities': [self.amenities[0]['id']]
+        }
+        create_response = self.client.post('/api/v1/places/',
+                                         data=json.dumps(place_data),
+                                         content_type='application/json',
+                                         headers={'Authorization': f'Bearer {self.token}'})
+        place_id = json.loads(create_response.data)['id']
+        
+        # Essayer de modifier sans token
+        update_data = {
+            'title': 'Hacked Place',
+            'price': 999.0
+        }
+        response = self.client.put(f'/api/v1/places/{place_id}',
+                                 data=json.dumps(update_data),
+                                 content_type='application/json')
+        
+        # Doit échouer car pas de token
+        self.assertEqual(response.status_code, 401)
 
 
 if __name__ == '__main__':
