@@ -25,6 +25,27 @@ class TestUsersEndpoints(unittest.TestCase):
     def tearDown(self):
         """Nettoyage après chaque test"""
         self.app_context.pop()
+    
+    def get_auth_token(self, email='john.doe@example.com', password='password123'):
+        """Helper pour obtenir un token JWT"""
+        from app.api.v1.users import facade
+        # Crée un utilisateur s'il n'existe pas
+        user = facade.get_user_by_email(email)
+        if not user:
+            facade.create_user({
+                'first_name': 'John',
+                'last_name': 'Doe',
+                'email': email,
+                'password': password
+            })
+        
+        login_data = {'email': email, 'password': password}
+        response = self.client.post('/api/v1/auth/login',
+                                   data=json.dumps(login_data),
+                                   content_type='application/json')
+        if response.status_code == 200:
+            return json.loads(response.data)['access_token']
+        return None
 
     def test_create_user_success(self):
         """Test création d'utilisateur avec succès"""
@@ -159,40 +180,48 @@ class TestUsersEndpoints(unittest.TestCase):
         created_user = json.loads(create_response.data)
         user_id = created_user['id']
         
-        # Mise à jour de l'utilisateur
+        # Obtient un token JWT pour cet utilisateur
+        token = self.get_auth_token('original@example.com', 'password123')
+        self.assertIsNotNone(token)
+        
+        # Mise à jour de l'utilisateur (sans email car on ne peut pas le modifier)
         update_data = {
             'first_name': 'Updated',
-            'last_name': 'Name',
-            'email': 'updated@example.com'
+            'last_name': 'Name'
         }
         
         response = self.client.put(f'/api/v1/users/{user_id}', 
                                  data=json.dumps(update_data),
-                                 content_type='application/json')
+                                 content_type='application/json',
+                                 headers={'Authorization': f'Bearer {token}'})
         
         self.assertEqual(response.status_code, 200)
         data = json.loads(response.data)
         self.assertEqual(data['first_name'], 'Updated')
-        self.assertEqual(data['email'], 'updated@example.com')
+        self.assertEqual(data['email'], 'original@example.com')  # Email ne change pas
 
     def test_update_user_not_found(self):
         """Test mise à jour d'utilisateur inexistant"""
+        # Obtient un token JWT
+        token = self.get_auth_token()
+        self.assertIsNotNone(token)
+        
         update_data = {
             'first_name': 'Updated',
-            'last_name': 'Name',
-            'email': 'updated@example.com'
+            'last_name': 'Name'
         }
         
         response = self.client.put('/api/v1/users/nonexistent-id', 
                                  data=json.dumps(update_data),
-                                 content_type='application/json')
+                                 content_type='application/json',
+                                 headers={'Authorization': f'Bearer {token}'})
         
         self.assertEqual(response.status_code, 404)
         data = json.loads(response.data)
         self.assertEqual(data['error'], 'User not found')
 
     def test_update_user_duplicate_email(self):
-        """Test mise à jour avec email déjà utilisé"""
+        """Test mise à jour avec email déjà utilisé (ne devrait pas être possible car email ne peut pas être modifié)"""
         # Crée deux utilisateurs
         user1_data = {'first_name': 'User1', 'last_name': 'Test1', 'email': 'user1@test.com', 'password': 'password123'}
         user2_data = {'first_name': 'User2', 'last_name': 'Test2', 'email': 'user2@test.com', 'password': 'password123'}
@@ -211,7 +240,11 @@ class TestUsersEndpoints(unittest.TestCase):
         
         user1_id = json.loads(create_response1.data)['id']
         
-        # Essaye de mettre à jour user1 avec l'email de user2
+        # Obtient un token JWT pour user1
+        token = self.get_auth_token('user1@test.com', 'password123')
+        self.assertIsNotNone(token)
+        
+        # Essaye de mettre à jour user1 avec l'email de user2 (ne devrait pas être possible)
         update_data = {
             'first_name': 'User1',
             'last_name': 'Test1',
@@ -220,14 +253,16 @@ class TestUsersEndpoints(unittest.TestCase):
         
         response = self.client.put(f'/api/v1/users/{user1_id}', 
                                  data=json.dumps(update_data),
-                                 content_type='application/json')
+                                 content_type='application/json',
+                                 headers={'Authorization': f'Bearer {token}'})
         
+        # Doit retourner 400 car on ne peut pas modifier l'email
         self.assertEqual(response.status_code, 400)
         data = json.loads(response.data)
-        self.assertEqual(data['error'], 'Email already registered')
+        self.assertEqual(data['error'], 'You cannot modify email or password')
 
     def test_update_user_same_email(self):
-        """Test mise à jour avec le même email (doit fonctionner)"""
+        """Test mise à jour avec le même email (ne devrait pas être possible car email ne peut pas être modifié)"""
         # Crée un utilisateur
         user_data = {
             'first_name': 'Original',
@@ -243,21 +278,25 @@ class TestUsersEndpoints(unittest.TestCase):
         created_user = json.loads(create_response.data)
         user_id = created_user['id']
         
-        # Mise à jour avec le même email
+        # Obtient un token JWT
+        token = self.get_auth_token('original@example.com', 'password123')
+        self.assertIsNotNone(token)
+        
+        # Mise à jour sans email (car on ne peut pas le modifier)
         update_data = {
             'first_name': 'Updated',
-            'last_name': 'Name',
-            'email': 'original@example.com'  # Même email
+            'last_name': 'Name'
         }
         
         response = self.client.put(f'/api/v1/users/{user_id}', 
                                  data=json.dumps(update_data),
-                                 content_type='application/json')
+                                 content_type='application/json',
+                                 headers={'Authorization': f'Bearer {token}'})
         
         self.assertEqual(response.status_code, 200)
         data = json.loads(response.data)
         self.assertEqual(data['first_name'], 'Updated')
-        self.assertEqual(data['email'], 'original@example.com')
+        self.assertEqual(data['email'], 'original@example.com')  # Email reste le même
 
     def test_get_all_users_empty_list(self):
         """Test récupération de tous les utilisateurs avec liste vide"""
@@ -388,22 +427,130 @@ class TestUsersEndpoints(unittest.TestCase):
         created_user = json.loads(create_response.data)
         user_id = created_user['id']
         
-        # Mise à jour de l'utilisateur
+        # Obtient un token JWT
+        token = self.get_auth_token('update@example.com', 'initial_password')
+        self.assertIsNotNone(token)
+        
+        # Mise à jour de l'utilisateur (sans email car on ne peut pas le modifier)
         update_data = {
             'first_name': 'Updated',
-            'last_name': 'Test',
-            'email': 'update@example.com'
+            'last_name': 'Test'
         }
         
         response = self.client.put(f'/api/v1/users/{user_id}', 
                                  data=json.dumps(update_data),
-                                 content_type='application/json')
+                                 content_type='application/json',
+                                 headers={'Authorization': f'Bearer {token}'})
         
         self.assertEqual(response.status_code, 200)
         data = json.loads(response.data)
         
         # Vérifie que le mot de passe n'est pas dans la réponse
         self.assertNotIn('password', data)
+    
+    def test_update_user_unauthorized(self):
+        """Test qu'un utilisateur ne peut pas modifier un autre utilisateur"""
+        # Crée deux utilisateurs
+        user1_data = {'first_name': 'User1', 'last_name': 'Test1', 'email': 'user1@test.com', 'password': 'password123'}
+        user2_data = {'first_name': 'User2', 'last_name': 'Test2', 'email': 'user2@test.com', 'password': 'password123'}
+        
+        create_response1 = self.client.post('/api/v1/users/', 
+                                          data=json.dumps(user1_data),
+                                          content_type='application/json')
+        create_response2 = self.client.post('/api/v1/users/', 
+                                          data=json.dumps(user2_data),
+                                          content_type='application/json')
+        
+        user1_id = json.loads(create_response1.data)['id']
+        user2_id = json.loads(create_response2.data)['id']
+        
+        # Obtient un token JWT pour user1
+        token = self.get_auth_token('user1@test.com', 'password123')
+        self.assertIsNotNone(token)
+        
+        # User1 essaie de modifier user2
+        update_data = {
+            'first_name': 'Hacked',
+            'last_name': 'Name'
+        }
+        
+        response = self.client.put(f'/api/v1/users/{user2_id}', 
+                                 data=json.dumps(update_data),
+                                 content_type='application/json',
+                                 headers={'Authorization': f'Bearer {token}'})
+        
+        # Doit retourner 403 car user1 ne peut pas modifier user2
+        self.assertEqual(response.status_code, 403)
+        data = json.loads(response.data)
+        self.assertEqual(data['error'], 'Unauthorized action')
+    
+    def test_update_user_without_token(self):
+        """Test qu'on ne peut pas modifier un utilisateur sans token JWT"""
+        # Crée un utilisateur d'abord
+        user_data = {
+            'first_name': 'Original',
+            'last_name': 'Name',
+            'email': 'original2@example.com',
+            'password': 'password123'
+        }
+        
+        create_response = self.client.post('/api/v1/users/', 
+                                         data=json.dumps(user_data),
+                                         content_type='application/json')
+        
+        created_user = json.loads(create_response.data)
+        user_id = created_user['id']
+        
+        # Essayer de modifier sans token
+        update_data = {
+            'first_name': 'Updated',
+            'last_name': 'Name'
+        }
+        
+        response = self.client.put(f'/api/v1/users/{user_id}', 
+                                 data=json.dumps(update_data),
+                                 content_type='application/json')
+        
+        # Doit échouer car pas de token
+        self.assertEqual(response.status_code, 401)
+    
+    def test_update_user_password(self):
+        """Test qu'on ne peut pas modifier le password via PUT"""
+        # Crée un utilisateur d'abord
+        user_data = {
+            'first_name': 'Original',
+            'last_name': 'Name',
+            'email': 'original3@example.com',
+            'password': 'password123'
+        }
+        
+        create_response = self.client.post('/api/v1/users/', 
+                                         data=json.dumps(user_data),
+                                         content_type='application/json')
+        
+        created_user = json.loads(create_response.data)
+        user_id = created_user['id']
+        
+        # Obtient un token JWT
+        token = self.get_auth_token('original3@example.com', 'password123')
+        self.assertIsNotNone(token)
+        
+        # Essayer de modifier le password
+        update_data = {
+            'first_name': 'Updated',
+            'last_name': 'Name',
+            'password': 'newpassword123'
+        }
+        
+        response = self.client.put(f'/api/v1/users/{user_id}', 
+                                 data=json.dumps(update_data),
+                                 content_type='application/json',
+                                 headers={'Authorization': f'Bearer {token}'})
+        
+        # Doit échouer car on ne peut pas modifier le password
+        self.assertEqual(response.status_code, 400)
+        data = json.loads(response.data)
+        self.assertEqual(data['error'], 'You cannot modify email or password')
 
 
 if __name__ == '__main__':
