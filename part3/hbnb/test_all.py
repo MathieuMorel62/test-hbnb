@@ -23,6 +23,7 @@ from app.api.v1.test.test_users_endpoints import TestUsersEndpoints
 from app.api.v1.test.test_amenities_endpoints import TestAmenitiesEndpoints
 from app.api.v1.test.test_places_endpoints import TestPlacesEndpoints
 from app.api.v1.test.test_reviews_endpoints import TestReviewsEndpoints
+from app.api.v1.test.test_auth_endpoints import TestAuthEndpoints
 from app.services.test.test_facade import TestHBnBFacade
 from app.services.test.test_amenities_facade import TestAmenitiesFacade
 
@@ -63,7 +64,8 @@ def discover_all_tests():
             (TestUsersEndpoints, "Tests Users Endpoints (API)"),
             (TestAmenitiesEndpoints, "Tests Amenities Endpoints (API)"),
             (TestPlacesEndpoints, "Tests Places Endpoints (API)"),
-            (TestReviewsEndpoints, "Tests Reviews Endpoints (API)")
+            (TestReviewsEndpoints, "Tests Reviews Endpoints (API)"),
+            (TestAuthEndpoints, "Tests Auth Endpoints (API)")
         ],
         'Services': [
             (TestHBnBFacade, "Tests HBnB Facade (Services)"),
@@ -198,6 +200,7 @@ def run_specific_test(test_class_name):
         'amenities_endpoints': TestAmenitiesEndpoints,
         'reviews_endpoints': TestReviewsEndpoints,
         'places_endpoints': TestPlacesEndpoints,
+        'auth_endpoints': TestAuthEndpoints,
         'facade': TestHBnBFacade,
         'amenities_facade': TestAmenitiesFacade
     }
@@ -226,7 +229,7 @@ def print_usage():
     print("  python test_all.py --class user       # Lance les tests d'une classe")
     print("  python test_all.py --help             # Affiche cette aide")
     print("\nModules disponibles: models, api, services, persistence")
-    print("Classes disponibles: user, amenity, place, review, users_endpoints, amenities_endpoints, places_endpoints, facade, amenities_facade")
+    print("Classes disponibles: user, amenity, place, review, users_endpoints, amenities_endpoints, places_endpoints, reviews_endpoints, auth_endpoints, facade, amenities_facade")
 
 
 if __name__ == "__main__":
