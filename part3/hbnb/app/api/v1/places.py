@@ -1,4 +1,5 @@
 from flask_restx import Namespace, Resource, fields
+from flask_jwt_extended import jwt_required, get_jwt_identity
 from app.services import facade
 
 
@@ -33,13 +34,18 @@ place_model = api.model('Place', {
 
 @api.route('/')
 class PlaceList(Resource):
+    @jwt_required()
     @api.expect(place_model)
     @api.response(201, 'Place successfully created')
     @api.response(400, 'Invalid input data')
+    @api.response(401, 'Unauthorized')
     def post(self):
         """Création d'un nouveau lieu."""
         try:
-            place = facade.create_place(api.payload)
+            current_user = get_jwt_identity()
+            place_data = api.payload.copy()
+            place_data['owner_id'] = current_user
+            place = facade.create_place(place_data)
             return {
                 'id': place.id,
                 'title': place.title,
@@ -102,16 +108,26 @@ class PlaceResource(Resource):
             'amenities': amenities_details
         }, 200
 
+
+    @jwt_required()
     @api.expect(place_model)
     @api.response(200, 'Place updated successfully')
     @api.response(404, 'Place not found')
     @api.response(400, 'Invalid input data')
+    @api.response(401, 'Unauthorized')
+    @api.response(403, 'Unauthorized action')
     def put(self, place_id):
         """Mise à jour des informations d'un lieu."""
         try:
-            place = facade.update_place(place_id, api.payload)
+            current_user = get_jwt_identity()
+            place = facade.get_place(place_id)
             if not place:
                 return {'message': 'Place not found'}, 404
+
+            if place.owner.id != current_user:
+                return {'error': 'Unauthorized action'}, 403
+
+            place = facade.update_place(place_id, api.payload)
             return {'message': 'Place updated successfully'}, 200
         except (ValueError, TypeError) as e:
             return {'error': str(e)}, 400
