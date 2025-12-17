@@ -6,6 +6,7 @@ import json
 sys.path.append(os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))))
 from app import create_app
 from app.services import facade
+from app.persistence.repository import InMemoryRepository
 
 
 class TestAuthEndpoints(unittest.TestCase):
@@ -13,13 +14,23 @@ class TestAuthEndpoints(unittest.TestCase):
 
     def setUp(self):
         """Configuration avant chaque test"""
-        self.app = create_app()
+        # Créer des repositories en mémoire pour les tests
+        user_repo = InMemoryRepository()
+        place_repo = InMemoryRepository()
+        review_repo = InMemoryRepository()
+        amenity_repo = InMemoryRepository()
+        
+        repositories = {
+            'user_repo': user_repo,
+            'place_repo': place_repo,
+            'review_repo': review_repo,
+            'amenity_repo': amenity_repo
+        }
+        
+        self.app = create_app(repositories)
         self.client = self.app.test_client()
         self.app_context = self.app.app_context()
         self.app_context.push()
-        
-        # Nettoie le repository et crée un utilisateur de test
-        facade.user_repo._storage.clear()
         
         # Crée un utilisateur pour les tests de login
         self.test_user = facade.create_user({
