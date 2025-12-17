@@ -8,22 +8,33 @@ from app import create_app
 from app.models.place import Place
 from app.models.user import User
 from app.models.amenity import Amenity
+from app.persistence.repository import InMemoryRepository
 
 class TestPlacesEndpoints(unittest.TestCase):
     """Tests pour les endpoints des places"""
 
     def setUp(self):
         """Configuration avant chaque test"""
-        self.app = create_app()
+        # Créer des repositories en mémoire pour les tests
+        user_repo = InMemoryRepository()
+        place_repo = InMemoryRepository()
+        review_repo = InMemoryRepository()
+        amenity_repo = InMemoryRepository()
+        
+        repositories = {
+            'user_repo': user_repo,
+            'place_repo': place_repo,
+            'review_repo': review_repo,
+            'amenity_repo': amenity_repo
+        }
+        
+        self.app = create_app(repositories)
         self.client = self.app.test_client()
         self.app_context = self.app.app_context()
         self.app_context.push()
         
         # Créer une nouvelle instance du facade pour chaque test
         from app.services import facade
-        facade.place_repo._storage.clear()
-        facade.user_repo._storage.clear()
-        facade.amenity_repo._storage.clear()
 
         # Créer un utilisateur admin et un utilisateur normal pour les tests
         admin_user = facade.create_user({
