@@ -442,6 +442,78 @@ class TestReviewsEndpoints(unittest.TestCase):
         # Doit échouer car pas de token
         self.assertEqual(response.status_code, 401)
 
+    def test_admin_can_update_any_review(self):
+        """Test qu'un admin peut modifier n'importe quelle review"""
+        # Créer une review avec le reviewer
+        review_data = {
+            "text": "Original review",
+            "rating": 4,
+            "place_id": self.place_id
+        }
+        create_response = self.client.post('/api/v1/reviews/', 
+                                          json=review_data,
+                                          headers={'Authorization': f'Bearer {self.token}'})
+        review_id = create_response.get_json()['id']
+        
+        # Créer un admin et obtenir son token
+        admin_user = facade.create_user({
+            "first_name": "Admin",
+            "last_name": "User",
+            "email": "admin@example.com",
+            "password": "admin123",
+            "is_admin": True
+        })
+        admin_token = self.get_auth_token('admin@example.com', 'admin123')
+        
+        # L'admin modifie cette review
+        update_data = {
+            "text": "Modified by admin",
+            "rating": 5
+        }
+        response = self.client.put(f'/api/v1/reviews/{review_id}', 
+                                  json=update_data,
+                                  headers={'Authorization': f'Bearer {admin_token}'})
+        
+        # Doit réussir car c'est un admin
+        self.assertEqual(response.status_code, 200)
+        data = response.get_json()['review']
+        self.assertEqual(data['text'], 'Modified by admin')
+        self.assertEqual(data['rating'], 5)
+
+    def test_admin_can_delete_any_review(self):
+        """Test qu'un admin peut supprimer n'importe quelle review"""
+        # Créer une review avec le reviewer
+        review_data = {
+            "text": "Review to delete",
+            "rating": 4,
+            "place_id": self.place_id
+        }
+        create_response = self.client.post('/api/v1/reviews/', 
+                                          json=review_data,
+                                          headers={'Authorization': f'Bearer {self.token}'})
+        review_id = create_response.get_json()['id']
+        
+        # Créer un admin et obtenir son token
+        admin_user = facade.create_user({
+            "first_name": "Admin",
+            "last_name": "User",
+            "email": "admin2@example.com",
+            "password": "admin123",
+            "is_admin": True
+        })
+        admin_token = self.get_auth_token('admin2@example.com', 'admin123')
+        
+        # L'admin supprime cette review
+        response = self.client.delete(f'/api/v1/reviews/{review_id}',
+                                     headers={'Authorization': f'Bearer {admin_token}'})
+        
+        # Doit réussir car c'est un admin
+        self.assertEqual(response.status_code, 200)
+        
+        # Vérifier que la review n'existe plus
+        get_response = self.client.get(f'/api/v1/reviews/{review_id}')
+        self.assertEqual(get_response.status_code, 404)
+
 
 if __name__ == '__main__':
     unittest.main()
