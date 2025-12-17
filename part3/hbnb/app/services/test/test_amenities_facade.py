@@ -6,6 +6,7 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(
 
 from app.services.facade import HBnBFacade
 from app.models.amenity import Amenity
+from app.persistence.repository import InMemoryRepository
 
 
 class TestAmenitiesFacade(unittest.TestCase):
@@ -13,7 +14,14 @@ class TestAmenitiesFacade(unittest.TestCase):
 
     def setUp(self):
         """Configuration avant chaque test"""
-        self.facade = HBnBFacade()
+        # Utiliser InMemoryRepository pour les tests jusqu'à ce que les modèles soient mappés à SQLAlchemy
+        repositories = {
+            'user_repo': InMemoryRepository(),
+            'place_repo': InMemoryRepository(),
+            'review_repo': InMemoryRepository(),
+            'amenity_repo': InMemoryRepository()
+        }
+        self.facade = HBnBFacade(repositories)
 
     def test_create_amenity(self):
         """Test création d'amenity via facade"""
