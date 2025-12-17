@@ -22,10 +22,33 @@ class TestAmenitiesEndpoints(unittest.TestCase):
         # Nettoyer le repository
         from app.api.v1.amenities import facade
         facade.amenity_repo._storage.clear()
+        
+        # Nettoyer et créer un utilisateur admin pour les tests
+        from app.services import facade as services_facade
+        services_facade.user_repo._storage.clear()
+        
+        self.admin_user = services_facade.create_user({
+            'first_name': 'Admin',
+            'last_name': 'User',
+            'email': 'admin@example.com',
+            'password': 'admin123',
+            'is_admin': True
+        })
+        self.admin_token = self.get_auth_token('admin@example.com', 'admin123')
 
     def tearDown(self):
         """Nettoyage après chaque test"""
         self.app_context.pop()
+    
+    def get_auth_token(self, email='admin@example.com', password='admin123'):
+        """Helper pour obtenir un token JWT"""
+        login_data = {'email': email, 'password': password}
+        response = self.client.post('/api/v1/auth/login',
+                                   data=json.dumps(login_data),
+                                   content_type='application/json')
+        if response.status_code == 200:
+            return json.loads(response.data)['access_token']
+        return None
 
     def test_create_amenity_success(self):
         """Test création d'amenity avec succès"""
@@ -35,7 +58,8 @@ class TestAmenitiesEndpoints(unittest.TestCase):
         
         response = self.client.post('/api/v1/amenities/', 
                                   data=json.dumps(amenity_data),
-                                  content_type='application/json')
+                                  content_type='application/json',
+                                  headers={'Authorization': f'Bearer {self.admin_token}'})
         
         self.assertEqual(response.status_code, 201)
         data = json.loads(response.data)
@@ -50,7 +74,8 @@ class TestAmenitiesEndpoints(unittest.TestCase):
         
         response = self.client.post('/api/v1/amenities/', 
                                   data=json.dumps(amenity_data),
-                                  content_type='application/json')
+                                  content_type='application/json',
+                                  headers={'Authorization': f'Bearer {self.admin_token}'})
         
         self.assertEqual(response.status_code, 400)
 
@@ -60,7 +85,8 @@ class TestAmenitiesEndpoints(unittest.TestCase):
         
         response = self.client.post('/api/v1/amenities/', 
                                   data=json.dumps(amenity_data),
-                                  content_type='application/json')
+                                  content_type='application/json',
+                                  headers={'Authorization': f'Bearer {self.admin_token}'})
         
         self.assertEqual(response.status_code, 400)
 
@@ -72,7 +98,8 @@ class TestAmenitiesEndpoints(unittest.TestCase):
         
         response = self.client.post('/api/v1/amenities/', 
                                   data=json.dumps(amenity_data),
-                                  content_type='application/json')
+                                  content_type='application/json',
+                                  headers={'Authorization': f'Bearer {self.admin_token}'})
         
         self.assertEqual(response.status_code, 400)
 
@@ -83,7 +110,8 @@ class TestAmenitiesEndpoints(unittest.TestCase):
         
         create_response = self.client.post('/api/v1/amenities/', 
                                          data=json.dumps(amenity_data),
-                                         content_type='application/json')
+                                         content_type='application/json',
+                                         headers={'Authorization': f'Bearer {self.admin_token}'})
         
         created_amenity = json.loads(create_response.data)
         amenity_id = created_amenity['id']
@@ -115,7 +143,8 @@ class TestAmenitiesEndpoints(unittest.TestCase):
         for amenity_data in amenities_data:
             self.client.post('/api/v1/amenities/', 
                            data=json.dumps(amenity_data),
-                           content_type='application/json')
+                           content_type='application/json',
+                           headers={'Authorization': f'Bearer {self.admin_token}'})
         
         # Récupérer toutes les amenities
         response = self.client.get('/api/v1/amenities/')
@@ -141,8 +170,10 @@ class TestAmenitiesEndpoints(unittest.TestCase):
         
         create_response = self.client.post('/api/v1/amenities/', 
                                          data=json.dumps(amenity_data),
-                                         content_type='application/json')
+                                         content_type='application/json',
+                                         headers={'Authorization': f'Bearer {self.admin_token}'})
         
+        self.assertEqual(create_response.status_code, 201)
         created_amenity = json.loads(create_response.data)
         amenity_id = created_amenity['id']
         
@@ -151,7 +182,8 @@ class TestAmenitiesEndpoints(unittest.TestCase):
         
         response = self.client.put(f'/api/v1/amenities/{amenity_id}', 
                                  data=json.dumps(update_data),
-                                 content_type='application/json')
+                                 content_type='application/json',
+                                 headers={'Authorization': f'Bearer {self.admin_token}'})
         
         self.assertEqual(response.status_code, 200)
         data = json.loads(response.data)
@@ -163,7 +195,8 @@ class TestAmenitiesEndpoints(unittest.TestCase):
         
         response = self.client.put('/api/v1/amenities/nonexistent-id', 
                                  data=json.dumps(update_data),
-                                 content_type='application/json')
+                                 content_type='application/json',
+                                 headers={'Authorization': f'Bearer {self.admin_token}'})
         
         self.assertEqual(response.status_code, 404)
         data = json.loads(response.data)
@@ -176,8 +209,10 @@ class TestAmenitiesEndpoints(unittest.TestCase):
         
         create_response = self.client.post('/api/v1/amenities/', 
                                          data=json.dumps(amenity_data),
-                                         content_type='application/json')
+                                         content_type='application/json',
+                                         headers={'Authorization': f'Bearer {self.admin_token}'})
         
+        self.assertEqual(create_response.status_code, 201)
         created_amenity = json.loads(create_response.data)
         amenity_id = created_amenity['id']
         
@@ -186,7 +221,8 @@ class TestAmenitiesEndpoints(unittest.TestCase):
         
         response = self.client.put(f'/api/v1/amenities/{amenity_id}', 
                                  data=json.dumps(update_data),
-                                 content_type='application/json')
+                                 content_type='application/json',
+                                 headers={'Authorization': f'Bearer {self.admin_token}'})
         
         self.assertEqual(response.status_code, 400)
 
@@ -197,8 +233,10 @@ class TestAmenitiesEndpoints(unittest.TestCase):
         
         create_response = self.client.post('/api/v1/amenities/', 
                                          data=json.dumps(amenity_data),
-                                         content_type='application/json')
+                                         content_type='application/json',
+                                         headers={'Authorization': f'Bearer {self.admin_token}'})
         
+        self.assertEqual(create_response.status_code, 201)
         created_amenity = json.loads(create_response.data)
         amenity_id = created_amenity['id']
         
@@ -207,9 +245,101 @@ class TestAmenitiesEndpoints(unittest.TestCase):
         
         response = self.client.put(f'/api/v1/amenities/{amenity_id}', 
                                  data=json.dumps(update_data),
-                                 content_type='application/json')
+                                 content_type='application/json',
+                                 headers={'Authorization': f'Bearer {self.admin_token}'})
         
         self.assertEqual(response.status_code, 400)
+
+    def test_create_amenity_without_admin_token(self):
+        """Test qu'un utilisateur non-admin ne peut pas créer une amenity"""
+        # Crée un utilisateur normal d'abord
+        normal_user_data = {
+            'first_name': 'Normal',
+            'last_name': 'User',
+            'email': 'normal@example.com',
+            'password': 'password123'
+        }
+        from app.services import facade as services_facade
+        normal_user = services_facade.create_user(normal_user_data)
+        normal_token = self.get_auth_token('normal@example.com', 'password123')
+        
+        # L'utilisateur normal essaie de créer une amenity
+        amenity_data = {'name': 'Wi-Fi'}
+        
+        response = self.client.post('/api/v1/amenities/', 
+                                  data=json.dumps(amenity_data),
+                                  content_type='application/json',
+                                  headers={'Authorization': f'Bearer {normal_token}'})
+        
+        # Doit échouer car ce n'est pas un admin
+        self.assertEqual(response.status_code, 403)
+        data = json.loads(response.data)
+        self.assertEqual(data['error'], 'Admin privileges required')
+
+    def test_create_amenity_without_token(self):
+        """Test qu'on ne peut pas créer une amenity sans token JWT"""
+        amenity_data = {'name': 'Wi-Fi'}
+        
+        response = self.client.post('/api/v1/amenities/', 
+                                  data=json.dumps(amenity_data),
+                                  content_type='application/json')
+        
+        # Doit échouer car pas de token
+        self.assertEqual(response.status_code, 401)
+
+    def test_update_amenity_without_admin_token(self):
+        """Test qu'un utilisateur non-admin ne peut pas modifier une amenity"""
+        # Crée une amenity d'abord avec l'admin
+        amenity_data = {'name': 'Test Pool'}
+        create_response = self.client.post('/api/v1/amenities/', 
+                                         data=json.dumps(amenity_data),
+                                         content_type='application/json',
+                                         headers={'Authorization': f'Bearer {self.admin_token}'})
+        created_amenity = json.loads(create_response.data)
+        amenity_id = created_amenity['id']
+        
+        # Crée un utilisateur normal
+        normal_user_data = {
+            'first_name': 'Normal',
+            'last_name': 'User',
+            'email': 'normal2@example.com',
+            'password': 'password123'
+        }
+        from app.services import facade as services_facade
+        normal_user = services_facade.create_user(normal_user_data)
+        normal_token = self.get_auth_token('normal2@example.com', 'password123')
+        
+        # L'utilisateur normal essaie de modifier l'amenity
+        update_data = {'name': 'Updated Pool'}
+        response = self.client.put(f'/api/v1/amenities/{amenity_id}', 
+                                 data=json.dumps(update_data),
+                                 content_type='application/json',
+                                 headers={'Authorization': f'Bearer {normal_token}'})
+        
+        # Doit échouer car ce n'est pas un admin
+        self.assertEqual(response.status_code, 403)
+        data = json.loads(response.data)
+        self.assertEqual(data['error'], 'Admin privileges required')
+
+    def test_update_amenity_without_token(self):
+        """Test qu'on ne peut pas modifier une amenity sans token JWT"""
+        # Crée une amenity d'abord avec l'admin
+        amenity_data = {'name': 'Test Pool'}
+        create_response = self.client.post('/api/v1/amenities/', 
+                                         data=json.dumps(amenity_data),
+                                         content_type='application/json',
+                                         headers={'Authorization': f'Bearer {self.admin_token}'})
+        created_amenity = json.loads(create_response.data)
+        amenity_id = created_amenity['id']
+        
+        # Essayer de modifier sans token
+        update_data = {'name': 'Updated Pool'}
+        response = self.client.put(f'/api/v1/amenities/{amenity_id}', 
+                                 data=json.dumps(update_data),
+                                 content_type='application/json')
+        
+        # Doit échouer car pas de token
+        self.assertEqual(response.status_code, 401)
 
 
 if __name__ == '__main__':
