@@ -8,6 +8,7 @@ from app.services.facade import HBnBFacade
 from app.models.user import User
 from app.models.place import Place
 from app.models.review import Review
+from app.persistence.repository import InMemoryRepository
 
 
 class TestHBnBFacade(unittest.TestCase):
@@ -15,7 +16,14 @@ class TestHBnBFacade(unittest.TestCase):
 
     def setUp(self):
         """Configuration avant chaque test"""
-        self.facade = HBnBFacade()
+        # Utiliser InMemoryRepository pour les tests jusqu'à ce que les modèles soient mappés à SQLAlchemy
+        repositories = {
+            'user_repo': InMemoryRepository(),
+            'place_repo': InMemoryRepository(),
+            'review_repo': InMemoryRepository(),
+            'amenity_repo': InMemoryRepository()
+        }
+        self.facade = HBnBFacade(repositories)
 
     def test_create_user(self):
         """Test création d'utilisateur via facade"""
