@@ -25,28 +25,40 @@ class TestPlacesEndpoints(unittest.TestCase):
         facade.user_repo._storage.clear()
         facade.amenity_repo._storage.clear()
 
-        # Créer un utilisateur et des amenities pour les tests
+        # Créer un utilisateur admin et un utilisateur normal pour les tests
+        admin_user = facade.create_user({
+            'first_name': 'Admin',
+            'last_name': 'User',
+            'email': 'admin@example.com',
+            'password': 'admin123',
+            'is_admin': True
+        })
+        self.admin_token = self.get_auth_token('admin@example.com', 'admin123')
+        
         self.user_data = {
             'first_name': 'John',
             'last_name': 'Doe',
             'email': 'john.doe@example.com',
             'password': 'password123'
         }
+        # Créer l'utilisateur via l'API avec le token admin
         response = self.client.post('/api/v1/users/',
                                   data=json.dumps(self.user_data),
-                                  content_type='application/json')
+                                  content_type='application/json',
+                                  headers={'Authorization': f'Bearer {self.admin_token}'})
         self.user = json.loads(response.data)
         
         # Obtenir un token JWT pour cet utilisateur
         self.token = self.get_auth_token('john.doe@example.com', 'password123')
 
-        # Créer des amenities
+        # Créer des amenities avec le token admin
         self.amenities = []
         amenity_names = ['Wi-Fi', 'Air Conditioning', 'Swimming Pool']
         for name in amenity_names:
             response = self.client.post('/api/v1/amenities/',
                                       data=json.dumps({'name': name}),
-                                      content_type='application/json')
+                                      content_type='application/json',
+                                      headers={'Authorization': f'Bearer {self.admin_token}'})
             self.amenities.append(json.loads(response.data))
     
     def get_auth_token(self, email='john.doe@example.com', password='password123'):
@@ -475,7 +487,8 @@ class TestPlacesEndpoints(unittest.TestCase):
         }
         other_user_response = self.client.post('/api/v1/users/',
                                                data=json.dumps(other_user_data),
-                                               content_type='application/json')
+                                               content_type='application/json',
+                                               headers={'Authorization': f'Bearer {self.admin_token}'})
         other_user = json.loads(other_user_response.data)
         other_token = self.get_auth_token('other@example.com', 'password123')
         
@@ -522,6 +535,41 @@ class TestPlacesEndpoints(unittest.TestCase):
         
         # Doit échouer car pas de token
         self.assertEqual(response.status_code, 401)
+
+    def test_admin_can_update_any_place(self):
+        """Test qu'un admin peut modifier n'importe quelle place"""
+        # Créer une place avec l'utilisateur normal
+        place_data = {
+            'title': 'User Place',
+            'description': 'User description',
+            'price': 100.0,
+            'latitude': 37.7749,
+            'longitude': -122.4194,
+            'amenities': [self.amenities[0]['id']]
+        }
+        create_response = self.client.post('/api/v1/places/',
+                                         data=json.dumps(place_data),
+                                         content_type='application/json',
+                                         headers={'Authorization': f'Bearer {self.token}'})
+        place_id = json.loads(create_response.data)['id']
+        
+        # L'admin modifie cette place
+        update_data = {
+            'title': 'Modified by Admin',
+            'price': 200.0
+        }
+        response = self.client.put(f'/api/v1/places/{place_id}',
+                                 data=json.dumps(update_data),
+                                 content_type='application/json',
+                                 headers={'Authorization': f'Bearer {self.admin_token}'})
+        
+        # Doit réussir car c'est un admin
+        self.assertEqual(response.status_code, 200)
+        
+        # Vérifier les modifications
+        get_response = self.client.get(f'/api/v1/places/{place_id}')
+        data = json.loads(get_response.data)
+        self.assertEqual(data['title'], 'Modified by Admin')
 
 
 if __name__ == '__main__':
