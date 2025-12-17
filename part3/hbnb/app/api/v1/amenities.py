@@ -1,4 +1,5 @@
 from flask_restx import Namespace, Resource, fields
+from flask_jwt_extended import jwt_required, get_jwt
 from app.services import facade
 
 api = Namespace('amenities', description="Amenities operations")
@@ -9,10 +10,19 @@ amenity_model = api.model('Amenity', {
 
 @api.route('/')
 class AmenityList(Resource):
+    @jwt_required()
     @api.expect(amenity_model, validate=True)
     @api.response(201, "Amenity successfully created")
     @api.response(400, "Invalid input data")
+    @api.response(401, "Unauthorized")
+    @api.response(403, "Admin privileges required")
     def post(self):
+        claims = get_jwt()
+        is_admin = claims.get('is_admin', False)
+
+        if not is_admin:
+            return {'error': "Admin privileges required"}, 403
+
         amenity_data = api.payload
 
         try:
@@ -66,10 +76,13 @@ class AmenityResource(Resource):
             'name': amenity.name
         }, 200
     
+    @jwt_required()
     @api.expect(amenity_model, validate=True)
     @api.response(200, "Amenity updated successfully")
     @api.response(404, "Amenity not found")
     @api.response(400, "Invalid input data")
+    @api.response(401, "Unauthorized")
+    @api.response(403, "Admin privileges required")
     def put(self, amenity_id):
         """
         Met à jour les détails d'un équipement.
@@ -81,6 +94,12 @@ class AmenityResource(Resource):
         Returns:
             tuple: Données de l'équipement et code HTTP.
         """
+        claims = get_jwt()
+        is_admin = claims.get('is_admin', False)
+
+        if not is_admin:
+            return {'error': "Admin privileges required"}, 403
+
         amenity_data = api.payload
 
         try:
