@@ -7,6 +7,7 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(
 
 from app import create_app
 from app.models.amenity import Amenity
+from app.persistence.repository import InMemoryRepository
 
 
 class TestAmenitiesEndpoints(unittest.TestCase):
@@ -14,20 +15,27 @@ class TestAmenitiesEndpoints(unittest.TestCase):
 
     def setUp(self):
         """Configuration avant chaque test"""
-        self.app = create_app()
+        # Créer des repositories en mémoire pour les tests
+        user_repo = InMemoryRepository()
+        place_repo = InMemoryRepository()
+        review_repo = InMemoryRepository()
+        amenity_repo = InMemoryRepository()
+        
+        repositories = {
+            'user_repo': user_repo,
+            'place_repo': place_repo,
+            'review_repo': review_repo,
+            'amenity_repo': amenity_repo
+        }
+        
+        self.app = create_app(repositories)
         self.client = self.app.test_client()
         self.app_context = self.app.app_context()
         self.app_context.push()
         
-        # Nettoyer le repository
-        from app.api.v1.amenities import facade
-        facade.amenity_repo._storage.clear()
-        
-        # Nettoyer et créer un utilisateur admin pour les tests
-        from app.services import facade as services_facade
-        services_facade.user_repo._storage.clear()
-        
-        self.admin_user = services_facade.create_user({
+        # Créer un utilisateur admin pour les tests
+        from app.services import facade
+        self.admin_user = facade.create_user({
             'first_name': 'Admin',
             'last_name': 'User',
             'email': 'admin@example.com',
