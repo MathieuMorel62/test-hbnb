@@ -1,4 +1,4 @@
-from app.persistence.repository import InMemoryRepository
+from app.persistence.repository import InMemoryRepository, SQLAlchemyRepository
 from app.models.user import User
 from app.models.amenity import Amenity
 from app.models.place import Place
@@ -15,17 +15,18 @@ class HBnBFacade:
         
         Args:
             repositories (dict): Dépôts à utiliser (pour les tests)
+            Si None, utilise SQLAlchemyRepository par défaut.
         """
         if repositories:
-            self.user_repo = repositories.get('user_repo', InMemoryRepository())
-            self.place_repo = repositories.get('place_repo', InMemoryRepository())
-            self.review_repo = repositories.get('review_repo', InMemoryRepository())
-            self.amenity_repo = repositories.get('amenity_repo', InMemoryRepository())
+            self.user_repo = repositories.get('user_repo', SQLAlchemyRepository(User))
+            self.place_repo = repositories.get('place_repo', SQLAlchemyRepository(Place))
+            self.review_repo = repositories.get('review_repo', SQLAlchemyRepository(Review))
+            self.amenity_repo = repositories.get('amenity_repo', SQLAlchemyRepository(Amenity))
         else:
-            self.user_repo = InMemoryRepository()
-            self.place_repo = InMemoryRepository()
-            self.review_repo = InMemoryRepository()
-            self.amenity_repo = InMemoryRepository()
+            self.user_repo = SQLAlchemyRepository(User)
+            self.place_repo = SQLAlchemyRepository(Place)
+            self.review_repo = SQLAlchemyRepository(Review)
+            self.amenity_repo = SQLAlchemyRepository(Amenity)
 
 
     def create_user(self, user_data):
