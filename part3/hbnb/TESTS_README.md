@@ -171,11 +171,11 @@ Le lanceur global affiche :
 
 ## 📈 Statistiques Actuelles
 
-- **Total des tests** : **156 tests** (45 Models + 79 API + 32 Services)
+- **Total des tests** : **164 tests** (45 Models + 91 API + 28 Services)
 - **Modules testés** : 
-  - ✅ **Models** : User (18), Amenity (8), Place (10), Review (9) = **45 tests**
-  - ✅ **API v1** : Users (20), Amenities (13), Places (20), Reviews (15), Auth (11) = **79 tests**
-  - ✅ **Services** : HBnB Facade (20) + Amenities Facade (12) = **32 tests**
+  - ✅ **Models** : User (17), Amenity (8), Place (10), Review (10) = **45 tests**
+  - ✅ **API v1** : Users (25), Amenities (16), Places (22), Reviews (17), Auth (11) = **91 tests**
+  - ✅ **Services** : HBnB Facade (18) + Amenities Facade (10) = **28 tests**
 - **Modules à développer** : Persistence
 - **Taux de réussite** : 100% ✅
 - **Couverture** : 100% des fonctionnalités développées
@@ -237,36 +237,43 @@ Le lanceur global affiche :
 - ✅ Validation texte None
 - ✅ Attributs hérités de BaseModel
 
-### **Tests d'API (Endpoints) - 79 tests**
+### **Tests d'API (Endpoints) - 91 tests**
 
-#### **Users Endpoints (20 tests)**
-- ✅ **POST /api/v1/users/**
-  - Création avec succès
+#### **Users Endpoints (25 tests)**
+- ✅ **POST /api/v1/users/** (Admin only - JWT requis)
+  - Création avec succès (avec token admin)
   - Email déjà existant (400)
   - Données invalides (400)
   - Champs manquants (400)
   - Sans mot de passe (400)
   - Mot de passe non retourné dans la réponse
-- ✅ **GET /api/v1/users/**
+  - Sans token admin (401/403)
+- ✅ **GET /api/v1/users/** (Public)
   - Liste avec utilisateurs
   - Liste vide
   - Mots de passe non retournés
-- ✅ **GET /api/v1/users/<id>**
+- ✅ **GET /api/v1/users/<id>** (Public)
   - Succès par ID
   - Utilisateur inexistant (404)
   - Mot de passe non retourné
 - ✅ **PUT /api/v1/users/<id>** (JWT requis)
-  - Succès avec nouvelles données
-  - Succès avec même email
+  - Succès avec nouvelles données (utilisateur ou admin)
+  - Succès avec même email (admin)
   - Utilisateur inexistant (404)
-  - Email déjà utilisé (400)
-  - Modification email interdite (400)
-  - Modification password interdite (400)
+  - Email déjà utilisé (400 - admin seulement)
+  - Modification email interdite (400 - utilisateur normal)
+  - Modification password interdite (400 - utilisateur normal)
+  - Modification email/password autorisée (admin seulement)
   - Utilisateur non autorisé (403)
   - Sans token JWT (401)
   - Mot de passe non retourné dans la réponse
+  - Admin peut modifier n'importe quel utilisateur
+  - Admin peut modifier l'email d'un utilisateur
+  - Admin peut modifier le password d'un utilisateur
+  - Non-admin ne peut pas créer d'utilisateur (403)
+  - Création sans token JWT (401)
 
-#### **Places Endpoints (20 tests)**
+#### **Places Endpoints (22 tests)**
 - ✅ **POST /api/v1/places/** (JWT requis)
   - Création avec succès (owner_id depuis JWT)
   - Sans token JWT (401)
@@ -293,8 +300,9 @@ Le lanceur global affiche :
   - Amenity invalide (400)
   - Utilisateur non autorisé (403)
   - Sans token JWT (401)
+  - Admin peut modifier n'importe quelle place (bypass propriété)
 
-#### **Reviews Endpoints (15 tests)**
+#### **Reviews Endpoints (17 tests)**
 - ✅ **POST /api/v1/reviews/** (JWT requis)
   - Création avec succès (user_id depuis JWT)
   - Sans token JWT (401)
@@ -319,6 +327,8 @@ Le lanceur global affiche :
   - Review inexistante (404)
   - Utilisateur non autorisé (403)
   - Sans token JWT (401)
+  - Admin peut modifier n'importe quelle review (bypass propriété)
+  - Admin peut supprimer n'importe quelle review (bypass propriété)
 
 #### **Auth Endpoints (11 tests)**
 - ✅ **POST /api/v1/auth/login**
@@ -335,23 +345,29 @@ Le lanceur global affiche :
   - Accès avec token invalide (401)
   - Accès avec token expiré (401)
 
-#### **Amenities Endpoints (13 tests)**
-- ✅ **POST /api/v1/amenities/**
-  - Création avec succès
+#### **Amenities Endpoints (16 tests)**
+- ✅ **POST /api/v1/amenities/** (Admin only - JWT requis)
+  - Création avec succès (avec token admin)
   - Données invalides (400)
   - Nom manquant (400)
   - Nom trop long (400)
-- ✅ **GET /api/v1/amenities/**
+  - Sans token admin (401/403)
+  - Non-admin ne peut pas créer d'amenity (403)
+  - Création sans token JWT (401)
+- ✅ **GET /api/v1/amenities/** (Public)
   - Liste avec amenities
   - Liste vide
-- ✅ **GET /api/v1/amenities/<id>**
+- ✅ **GET /api/v1/amenities/<id>** (Public)
   - Succès par ID
   - Amenity inexistante (404)
-- ✅ **PUT /api/v1/amenities/<id>**
-  - Succès avec nouvelles données
+- ✅ **PUT /api/v1/amenities/<id>** (Admin only - JWT requis)
+  - Succès avec nouvelles données (avec token admin)
   - Amenity inexistante (404)
   - Données invalides (400)
   - Nom trop long (400)
+  - Sans token admin (401/403)
+  - Non-admin ne peut pas modifier d'amenity (403)
+  - Modification sans token JWT (401)
 
 ### **Tests de Services (Facade) - 32 tests**
 
@@ -385,15 +401,20 @@ Le lanceur global affiche :
 
 #### **Places**
 - ✅ POST `/api/v1/places/` - Création avec JWT, owner_id automatique depuis token
-- ✅ PUT `/api/v1/places/<id>` - Modification avec vérification de propriété
+- ✅ PUT `/api/v1/places/<id>` - Modification avec vérification de propriété (admin peut bypasser)
 
 #### **Reviews**
 - ✅ POST `/api/v1/reviews/` - Création avec JWT, user_id automatique depuis token
-- ✅ PUT `/api/v1/reviews/<id>` - Modification avec vérification de propriété
-- ✅ DELETE `/api/v1/reviews/<id>` - Suppression avec vérification de propriété
+- ✅ PUT `/api/v1/reviews/<id>` - Modification avec vérification de propriété (admin peut bypasser)
+- ✅ DELETE `/api/v1/reviews/<id>` - Suppression avec vérification de propriété (admin peut bypasser)
 
 #### **Users**
-- ✅ PUT `/api/v1/users/<id>` - Modification avec vérification de propriété et restrictions
+- ✅ POST `/api/v1/users/` - **Admin only** - Création d'utilisateur réservée aux admins
+- ✅ PUT `/api/v1/users/<id>` - Modification avec vérification de propriété (admin peut modifier n'importe quel utilisateur et email/password)
+
+#### **Amenities**
+- ✅ POST `/api/v1/amenities/` - **Admin only** - Création d'amenity réservée aux admins
+- ✅ PUT `/api/v1/amenities/<id>` - **Admin only** - Modification d'amenity réservée aux admins
 
 ### **Endpoints Publics (sans JWT)**
 
@@ -407,11 +428,17 @@ Le lanceur global affiche :
 
 ### **Validations de Sécurité Testées**
 
-- ✅ Vérification de propriété (places, reviews)
+- ✅ Vérification de propriété (places, reviews) - admin peut bypasser
 - ✅ Empêchement de review de son propre lieu
 - ✅ Empêchement de review dupliquée
-- ✅ Empêchement de modification email/password
-- ✅ Empêchement de modification d'un autre utilisateur
+- ✅ Empêchement de modification email/password (utilisateurs normaux uniquement)
+- ✅ Empêchement de modification d'un autre utilisateur (utilisateurs normaux uniquement)
+- ✅ **Contrôle d'accès administrateur** :
+  - ✅ POST `/api/v1/users/` - Admin only (403 si non-admin)
+  - ✅ POST `/api/v1/amenities/` - Admin only (403 si non-admin)
+  - ✅ PUT `/api/v1/amenities/<id>` - Admin only (403 si non-admin)
+  - ✅ Admins peuvent modifier n'importe quel utilisateur (y compris email/password)
+  - ✅ Admins peuvent modifier/supprimer n'importe quelle place ou review
 - ✅ Tous les endpoints protégés retournent 401 sans token
 - ✅ Tous les endpoints protégés retournent 403 pour actions non autorisées
 
@@ -442,28 +469,28 @@ Le lanceur global affiche :
 
 | Endpoint | Méthode | Tests | Scénarios Testés |
 |----------|---------|-------|------------------|
-| `/api/v1/users/` | POST | ✅ | Succès + email dupliqué + données invalides + champs manquants + sans password |
-| `/api/v1/users/` | GET | ✅ | Liste avec utilisateurs + liste vide |
-| `/api/v1/users/<id>` | GET | ✅ | Succès + inexistant |
-| `/api/v1/users/<id>` | PUT | ✅ | Succès + inexistant + email dupliqué + même email + JWT + unauthorized + sans token + password |
-| `/api/v1/amenities/` | POST | ✅ | Succès + données invalides + champs manquants + nom trop long |
-| `/api/v1/amenities/` | GET | ✅ | Liste avec amenities + liste vide |
-| `/api/v1/amenities/<id>` | GET | ✅ | Succès + inexistant |
-| `/api/v1/amenities/<id>` | PUT | ✅ | Succès + inexistant + données invalides + nom trop long |
+| `/api/v1/users/` | POST | ✅ | **Admin only** - Succès + email dupliqué + données invalides + champs manquants + sans password + sans token admin |
+| `/api/v1/users/` | GET | ✅ | Liste avec utilisateurs + liste vide (public) |
+| `/api/v1/users/<id>` | GET | ✅ | Succès + inexistant (public) |
+| `/api/v1/users/<id>` | PUT | ✅ | Succès + inexistant + email dupliqué (admin) + même email + JWT + unauthorized + sans token + password (users normaux) + admin peut modifier email/password |
+| `/api/v1/amenities/` | POST | ✅ | **Admin only** - Succès + données invalides + champs manquants + nom trop long + sans token admin |
+| `/api/v1/amenities/` | GET | ✅ | Liste avec amenities + liste vide (public) |
+| `/api/v1/amenities/<id>` | GET | ✅ | Succès + inexistant (public) |
+| `/api/v1/amenities/<id>` | PUT | ✅ | **Admin only** - Succès + inexistant + données invalides + nom trop long + sans token admin |
 | `/api/v1/places/` | POST | ✅ | Succès + JWT + données invalides + coordonnées invalides + amenity invalide + sans token |
 | `/api/v1/places/` | GET | ✅ | Liste avec places (public) |
 | `/api/v1/places/<id>` | GET | ✅ | Succès + inexistant (public) |
-| `/api/v1/places/<id>` | PUT | ✅ | Succès + inexistant + JWT + unauthorized + sans token + données invalides |
+| `/api/v1/places/<id>` | PUT | ✅ | Succès + inexistant + JWT + unauthorized + sans token + données invalides + admin peut bypasser propriété |
 | `/api/v1/reviews/` | POST | ✅ | Succès + JWT + rating invalide + place inexistante + own place + duplicate + sans token |
 | `/api/v1/reviews/` | GET | ✅ | Liste avec reviews (public) |
 | `/api/v1/reviews/<id>` | GET | ✅ | Succès + inexistant (public) |
-| `/api/v1/reviews/<id>` | PUT | ✅ | Succès + inexistant + JWT + unauthorized + sans token |
-| `/api/v1/reviews/<id>` | DELETE | ✅ | Succès + inexistant + JWT + unauthorized + sans token |
+| `/api/v1/reviews/<id>` | PUT | ✅ | Succès + inexistant + JWT + unauthorized + sans token + admin peut bypasser propriété |
+| `/api/v1/reviews/<id>` | DELETE | ✅ | Succès + inexistant + JWT + unauthorized + sans token + admin peut bypasser propriété |
 | `/api/v1/reviews/places/<place_id>/reviews` | GET | ✅ | Liste des reviews d'un lieu (public) |
 | `/api/v1/auth/login` | POST | ✅ | Succès + email invalide + password invalide + champs manquants + token format |
 | `/api/v1/auth/protected` | GET | ✅ | Token valide + sans token + token invalide + token expiré |
 
-## 🆕 Nouveaux Tests Ajoutés (Authentification JWT)
+## 🆕 Nouveaux Tests Ajoutés (Authentification JWT et Admin)
 
 ### **Tests d'Authentification (Auth Endpoints) - 11 tests**
 - ✅ `test_login_success()` - Connexion réussie
@@ -478,11 +505,12 @@ Le lanceur global affiche :
 - ✅ `test_jwt_token_contains_user_id()` - Token contient user_id
 - ✅ `test_protected_endpoint_with_bearer_format()` - Format Bearer correct
 
-### **Tests Places avec JWT - 2 nouveaux tests**
+### **Tests Places avec JWT et Admin - 3 tests**
 - ✅ `test_update_place_unauthorized()` - Modification non autorisée (403)
 - ✅ `test_update_place_without_token()` - Modification sans token (401)
+- ✅ `test_admin_can_update_any_place()` - Admin peut modifier n'importe quelle place (bypass propriété)
 
-### **Tests Reviews avec JWT - 6 nouveaux tests**
+### **Tests Reviews avec JWT et Admin - 8 tests**
 - ✅ `test_create_review_own_place()` - Review de son propre lieu (400)
 - ✅ `test_create_review_duplicate()` - Review dupliquée (400)
 - ✅ `test_update_review_unauthorized()` - Modification non autorisée (403)
@@ -490,11 +518,24 @@ Le lanceur global affiche :
 - ✅ `test_create_review_without_token()` - Création sans token (401)
 - ✅ `test_update_review_without_token()` - Modification sans token (401)
 - ✅ `test_delete_review_without_token()` - Suppression sans token (401)
+- ✅ `test_admin_can_update_any_review()` - Admin peut modifier n'importe quelle review (bypass propriété)
+- ✅ `test_admin_can_delete_any_review()` - Admin peut supprimer n'importe quelle review (bypass propriété)
 
-### **Tests Users avec JWT - 2 nouveaux tests**
+### **Tests Amenities avec Admin - 4 tests**
+- ✅ `test_create_amenity_without_admin_token()` - Non-admin ne peut pas créer d'amenity (403)
+- ✅ `test_create_amenity_without_token()` - Création sans token JWT (401)
+- ✅ `test_update_amenity_without_admin_token()` - Non-admin ne peut pas modifier d'amenity (403)
+- ✅ `test_update_amenity_without_token()` - Modification sans token JWT (401)
+
+### **Tests Users avec JWT et Admin - 8 tests**
 - ✅ `test_update_user_unauthorized()` - Modification non autorisée (403)
 - ✅ `test_update_user_without_token()` - Modification sans token (401)
-- ✅ `test_update_user_password()` - Modification password interdite (400)
+- ✅ `test_update_user_password()` - Modification password interdite (400 - utilisateur normal)
+- ✅ `test_create_user_without_admin_token()` - Non-admin ne peut pas créer d'utilisateur (403)
+- ✅ `test_create_user_without_token()` - Création sans token JWT (401)
+- ✅ `test_admin_can_modify_any_user_email()` - Admin peut modifier l'email d'un utilisateur
+- ✅ `test_admin_can_modify_any_user_password()` - Admin peut modifier le password d'un utilisateur
+- ✅ `test_admin_can_modify_other_user()` - Admin peut modifier n'importe quel utilisateur
 
 ## 🚀 Prochaines Étapes
 
@@ -514,8 +555,14 @@ Le lanceur global affiche :
 
 ## 📝 Notes Importantes
 
-- Tous les endpoints POST/PUT/DELETE nécessitent maintenant un JWT (sauf création d'utilisateur)
+- **Endpoints Admin Only (JWT admin requis)** :
+  - POST `/api/v1/users/` - Création d'utilisateur
+  - POST `/api/v1/amenities/` - Création d'amenity
+  - PUT `/api/v1/amenities/<id>` - Modification d'amenity
+  - PUT `/api/v1/users/<id>` - Admins peuvent modifier n'importe quel utilisateur (y compris email/password)
+- Les endpoints POST/PUT/DELETE nécessitent un JWT (avec restrictions de propriété pour utilisateurs normaux)
 - Les endpoints GET restent publics pour permettre la consultation
-- Les validations de propriété sont testées pour places, reviews et users
+- Les validations de propriété sont testées pour places, reviews et users (admins peuvent bypasser)
 - Les restrictions métier (pas de review de son propre lieu, pas de doublon) sont testées
 - La sécurité des mots de passe est testée (non retournés dans les réponses)
+- **Contrôle d'accès basé sur les rôles (RBAC)** : Les administrateurs ont des privilèges étendus pour gérer toutes les ressources
