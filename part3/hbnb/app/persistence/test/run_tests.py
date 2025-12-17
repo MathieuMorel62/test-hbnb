@@ -10,6 +10,13 @@ import os
 # Ajout du chemin du projet à sys.path
 sys.path.append(os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))))
 
+from app.persistence.test.test_repository import (
+    TestRepositoryInterface,
+    TestInMemoryRepository,
+    TestSQLAlchemyRepositoryStructure
+)
+
+
 def run_persistence_tests():
     """Lance tous les tests du module Persistence"""
     
@@ -17,11 +24,25 @@ def run_persistence_tests():
     print("🧪 TESTS DU MODULE PERSISTENCE")
     print("=" * 60)
     
-    # TODO: Ajouter les classes de tests Persistence quand elles seront créées
-    # test_classes = []
+    test_classes = [
+        (TestRepositoryInterface, "Tests Interface Repository"),
+        (TestInMemoryRepository, "Tests InMemoryRepository"),
+        (TestSQLAlchemyRepositoryStructure, "Tests Structure SQLAlchemyRepository")
+    ]
     
-    print("ℹ️  Aucun test Persistence n'est encore défini.")    
-    return True
+    loader = unittest.TestLoader()
+    suite = unittest.TestSuite()
+    
+    for test_class, description in test_classes:
+        print(f"\n{description}")
+        print("-" * 40)
+        tests = loader.loadTestsFromTestCase(test_class)
+        suite.addTests(tests)
+    
+    runner = unittest.TextTestRunner(verbosity=2)
+    result = runner.run(suite)
+    
+    return result.wasSuccessful()
 
 
 if __name__ == "__main__":
