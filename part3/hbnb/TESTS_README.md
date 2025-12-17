@@ -161,6 +161,11 @@ Le lanceur global affiche :
 2. Mettez à jour `app/persistence/test/run_tests.py`
 3. Ajoutez les classes dans `test_all.py`
 
+**Note** : Les tests de Persistence incluent actuellement :
+- Tests de l'interface Repository
+- Tests complets d'InMemoryRepository
+- Tests de structure pour SQLAlchemyRepository (les tests fonctionnels complets nécessiteront le mapping des modèles)
+
 ## Avantages de Cette Organisation
 
 - ✅ **Modularité** : Tests organisés par module fonctionnel
@@ -171,13 +176,13 @@ Le lanceur global affiche :
 
 ## Statistiques Actuelles
 
-- **Total des tests** : **164 tests** (45 Models + 91 API + 28 Services)
+- **Total des tests** : **179 tests** (45 Models + 91 API + 28 Services + 15 Persistence)
 - **Modules testés** : 
   - ✅ **Models** : User (17), Amenity (8), Place (10), Review (10) = **45 tests**
   - ✅ **API v1** : Users (25), Amenities (16), Places (22), Reviews (17), Auth (11) = **91 tests**
   - ✅ **Services** : HBnB Facade (18) + Amenities Facade (10) = **28 tests**
-- **Modules à développer** : Persistence
-- **Taux de réussite** : 100% ✅
+  - ✅ **Persistence** : Repository Interface (5) + InMemoryRepository (8) + SQLAlchemyRepository Structure (2) = **15 tests**
+- **Taux de réussite** : 93% ✅ (167/179 tests passent)
 - **Couverture** : 100% des fonctionnalités développées
 
 ## Types de Tests Couverts
@@ -369,9 +374,9 @@ Le lanceur global affiche :
   - Non-admin ne peut pas modifier d'amenity (403)
   - Modification sans token JWT (401)
 
-### **Tests de Services (Facade) - 32 tests**
+### **Tests de Services (Facade) - 28 tests**
 
-#### **HBnB Facade (20 tests)**
+#### **HBnB Facade (18 tests)**
 - ✅ **Gestion des utilisateurs**
   - Création d'utilisateurs
   - Récupération par ID (succès + inexistant)
@@ -388,7 +393,7 @@ Le lanceur global affiche :
   - Mise à jour (succès + rating invalide)
   - Suppression
 
-#### **Amenities Facade (12 tests)**
+#### **Amenities Facade (10 tests)**
 - ✅ **Gestion des amenities**
   - Création (succès + nom invalide + nom trop long)
   - Récupération par ID (succès + inexistant)
@@ -566,3 +571,8 @@ Le lanceur global affiche :
 - Les restrictions métier (pas de review de son propre lieu, pas de doublon) sont testées
 - La sécurité des mots de passe est testée (non retournés dans les réponses)
 - **Contrôle d'accès basé sur les rôles (RBAC)** : Les administrateurs ont des privilèges étendus pour gérer toutes les ressources
+- **Persistence** :
+  - **InMemoryRepository** : Utilisé pour les tests (rapide, pas de base de données nécessaire)
+  - **SQLAlchemyRepository** : Utilisé par défaut dans la facade (prêt pour la base de données)
+  - Les modèles ne sont pas encore mappés à SQLAlchemy, donc les tests utilisent InMemoryRepository
+  - SQLAlchemy est configuré et initialisé, prêt pour le mapping des modèles (prochaine étape)
