@@ -1,5 +1,5 @@
 from flask_restx import Namespace, Resource, fields
-from flask_jwt_extended import jwt_required, get_jwt_identity
+from flask_jwt_extended import jwt_required, get_jwt_identity, get_jwt
 from app.services import facade
 
 
@@ -120,12 +120,15 @@ class PlaceResource(Resource):
         """Mise à jour des informations d'un lieu."""
         try:
             current_user = get_jwt_identity()
+            claims = get_jwt()
+            is_admin = claims.get('is_admin', False)
+
             place = facade.get_place(place_id)
             if not place:
                 return {'message': 'Place not found'}, 404
 
-            if place.owner.id != current_user:
-                return {'error': 'Unauthorized action'}, 403
+            if not is_admin and place.owner.id != current_user:
+                return {'error': "Unauthorized action"}, 403
 
             place = facade.update_place(place_id, api.payload)
             return {'message': 'Place updated successfully'}, 200
