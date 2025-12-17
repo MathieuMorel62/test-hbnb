@@ -21,12 +21,22 @@ class TestUsersEndpoints(unittest.TestCase):
         # Crée une nouvelle instance du facade pour chaque test
         from app.api.v1.users import facade
         facade.user_repo._storage.clear()  # Nettoie le repository
+        
+        # Crée un utilisateur admin pour les tests
+        self.admin_user = facade.create_user({
+            'first_name': 'Admin',
+            'last_name': 'User',
+            'email': 'admin@example.com',
+            'password': 'admin123',
+            'is_admin': True
+        })
+        self.admin_token = self.get_auth_token('admin@example.com', 'admin123')
 
     def tearDown(self):
         """Nettoyage après chaque test"""
         self.app_context.pop()
     
-    def get_auth_token(self, email='john.doe@example.com', password='password123'):
+    def get_auth_token(self, email='admin@example.com', password='admin123'):
         """Helper pour obtenir un token JWT"""
         from app.api.v1.users import facade
         # Crée un utilisateur s'il n'existe pas
@@ -36,7 +46,8 @@ class TestUsersEndpoints(unittest.TestCase):
                 'first_name': 'John',
                 'last_name': 'Doe',
                 'email': email,
-                'password': password
+                'password': password,
+                'is_admin': (email == 'admin@example.com')
             })
         
         login_data = {'email': email, 'password': password}
@@ -58,10 +69,8 @@ class TestUsersEndpoints(unittest.TestCase):
         
         response = self.client.post('/api/v1/users/', 
                                   data=json.dumps(user_data),
-                                  content_type='application/json')
-        
-        print(f"Response status: {response.status_code}")
-        print(f"Response data: {response.data}")
+                                  content_type='application/json',
+                                  headers={'Authorization': f'Bearer {self.admin_token}'})
         
         self.assertEqual(response.status_code, 201)
         data = json.loads(response.data)
@@ -82,12 +91,14 @@ class TestUsersEndpoints(unittest.TestCase):
         # Crée un nouvel utilisateur
         self.client.post('/api/v1/users/', 
                         data=json.dumps(user_data),
-                        content_type='application/json')
+                        content_type='application/json',
+                        headers={'Authorization': f'Bearer {self.admin_token}'})
         
         # Essaye de créer un autre utilisateur avec le même email
         response = self.client.post('/api/v1/users/', 
                                   data=json.dumps(user_data),
-                                  content_type='application/json')
+                                  content_type='application/json',
+                                  headers={'Authorization': f'Bearer {self.admin_token}'})
         
         self.assertEqual(response.status_code, 400)
         data = json.loads(response.data)
@@ -103,7 +114,8 @@ class TestUsersEndpoints(unittest.TestCase):
         
         response = self.client.post('/api/v1/users/', 
                                   data=json.dumps(user_data),
-                                  content_type='application/json')
+                                  content_type='application/json',
+                                  headers={'Authorization': f'Bearer {self.admin_token}'})
         
         self.assertEqual(response.status_code, 400)
 
@@ -119,7 +131,8 @@ class TestUsersEndpoints(unittest.TestCase):
         
         create_response = self.client.post('/api/v1/users/', 
                                          data=json.dumps(user_data),
-                                         content_type='application/json')
+                                         content_type='application/json',
+                                         headers={'Authorization': f'Bearer {self.admin_token}'})
         
         created_user = json.loads(create_response.data)
         user_id = created_user['id']
@@ -153,7 +166,8 @@ class TestUsersEndpoints(unittest.TestCase):
         for user_data in users_data:
             self.client.post('/api/v1/users/', 
                            data=json.dumps(user_data),
-                           content_type='application/json')
+                           content_type='application/json',
+                           headers={'Authorization': f'Bearer {self.admin_token}'})
         
         # Récupère tous les utilisateurs
         response = self.client.get('/api/v1/users/')
@@ -161,7 +175,8 @@ class TestUsersEndpoints(unittest.TestCase):
         self.assertEqual(response.status_code, 200)
         data = json.loads(response.data)
         self.assertIsInstance(data, list)
-        self.assertEqual(len(data), 2)
+        # 2 utilisateurs créés + 1 admin = 3 total
+        self.assertEqual(len(data), 3)
 
     def test_update_user_success(self):
         """Test mise à jour d'utilisateur avec succès"""
@@ -175,7 +190,8 @@ class TestUsersEndpoints(unittest.TestCase):
         
         create_response = self.client.post('/api/v1/users/', 
                                          data=json.dumps(user_data),
-                                         content_type='application/json')
+                                         content_type='application/json',
+                                         headers={'Authorization': f'Bearer {self.admin_token}'})
         
         created_user = json.loads(create_response.data)
         user_id = created_user['id']
@@ -228,17 +244,20 @@ class TestUsersEndpoints(unittest.TestCase):
         
         create_response1 = self.client.post('/api/v1/users/', 
                                           data=json.dumps(user1_data),
-                                          content_type='application/json')
+                                          content_type='application/json',
+                                          headers={'Authorization': f'Bearer {self.admin_token}'})
         
         create_response2 = self.client.post('/api/v1/users/', 
                                           data=json.dumps(user2_data),
-                                          content_type='application/json')
+                                          content_type='application/json',
+                                          headers={'Authorization': f'Bearer {self.admin_token}'})
         
         # Vérifie que les créations ont réussies
         self.assertEqual(create_response1.status_code, 201)
         self.assertEqual(create_response2.status_code, 201)
         
         user1_id = json.loads(create_response1.data)['id']
+        user2_id = json.loads(create_response2.data)['id']
         
         # Obtient un token JWT pour user1
         token = self.get_auth_token('user1@test.com', 'password123')
@@ -273,8 +292,10 @@ class TestUsersEndpoints(unittest.TestCase):
         
         create_response = self.client.post('/api/v1/users/', 
                                          data=json.dumps(user_data),
-                                         content_type='application/json')
+                                         content_type='application/json',
+                                         headers={'Authorization': f'Bearer {self.admin_token}'})
         
+        self.assertEqual(create_response.status_code, 201)
         created_user = json.loads(create_response.data)
         user_id = created_user['id']
         
@@ -299,13 +320,14 @@ class TestUsersEndpoints(unittest.TestCase):
         self.assertEqual(data['email'], 'original@example.com')  # Email reste le même
 
     def test_get_all_users_empty_list(self):
-        """Test récupération de tous les utilisateurs avec liste vide"""
+        """Test récupération de tous les utilisateurs avec liste vide (sauf admin créé dans setUp)"""
         response = self.client.get('/api/v1/users/')
         
         self.assertEqual(response.status_code, 200)
         data = json.loads(response.data)
         self.assertIsInstance(data, list)
-        self.assertEqual(len(data), 0)
+        # L'admin est créé dans setUp, donc il y a au moins 1 utilisateur
+        self.assertEqual(len(data), 1)
 
     def test_create_user_missing_fields(self):
         """Test création d'utilisateur avec champs manquants"""
@@ -317,7 +339,8 @@ class TestUsersEndpoints(unittest.TestCase):
         
         response = self.client.post('/api/v1/users/', 
                                   data=json.dumps(user_data),
-                                  content_type='application/json')
+                                  content_type='application/json',
+                                  headers={'Authorization': f'Bearer {self.admin_token}'})
         
         self.assertEqual(response.status_code, 400)
 
@@ -332,7 +355,8 @@ class TestUsersEndpoints(unittest.TestCase):
         
         response = self.client.post('/api/v1/users/', 
                                   data=json.dumps(user_data),
-                                  content_type='application/json')
+                                  content_type='application/json',
+                                  headers={'Authorization': f'Bearer {self.admin_token}'})
         
         self.assertEqual(response.status_code, 201)
         data = json.loads(response.data)
@@ -358,8 +382,10 @@ class TestUsersEndpoints(unittest.TestCase):
         
         create_response = self.client.post('/api/v1/users/', 
                                          data=json.dumps(user_data),
-                                         content_type='application/json')
+                                         content_type='application/json',
+                                         headers={'Authorization': f'Bearer {self.admin_token}'})
         
+        self.assertEqual(create_response.status_code, 201)
         created_user = json.loads(create_response.data)
         user_id = created_user['id']
         
@@ -383,7 +409,8 @@ class TestUsersEndpoints(unittest.TestCase):
         for user_data in users_data:
             self.client.post('/api/v1/users/', 
                            data=json.dumps(user_data),
-                           content_type='application/json')
+                           content_type='application/json',
+                           headers={'Authorization': f'Bearer {self.admin_token}'})
         
         # Récupère tous les utilisateurs
         response = self.client.get('/api/v1/users/')
@@ -405,7 +432,8 @@ class TestUsersEndpoints(unittest.TestCase):
         
         response = self.client.post('/api/v1/users/', 
                                   data=json.dumps(user_data),
-                                  content_type='application/json')
+                                  content_type='application/json',
+                                  headers={'Authorization': f'Bearer {self.admin_token}'})
         
         # Doit échouer car le mot de passe est requis
         self.assertEqual(response.status_code, 400)
@@ -422,8 +450,10 @@ class TestUsersEndpoints(unittest.TestCase):
         
         create_response = self.client.post('/api/v1/users/', 
                                          data=json.dumps(user_data),
-                                         content_type='application/json')
+                                         content_type='application/json',
+                                         headers={'Authorization': f'Bearer {self.admin_token}'})
         
+        self.assertEqual(create_response.status_code, 201)
         created_user = json.loads(create_response.data)
         user_id = created_user['id']
         
@@ -456,11 +486,15 @@ class TestUsersEndpoints(unittest.TestCase):
         
         create_response1 = self.client.post('/api/v1/users/', 
                                           data=json.dumps(user1_data),
-                                          content_type='application/json')
+                                          content_type='application/json',
+                                          headers={'Authorization': f'Bearer {self.admin_token}'})
         create_response2 = self.client.post('/api/v1/users/', 
                                           data=json.dumps(user2_data),
-                                          content_type='application/json')
+                                          content_type='application/json',
+                                          headers={'Authorization': f'Bearer {self.admin_token}'})
         
+        self.assertEqual(create_response1.status_code, 201)
+        self.assertEqual(create_response2.status_code, 201)
         user1_id = json.loads(create_response1.data)['id']
         user2_id = json.loads(create_response2.data)['id']
         
@@ -496,7 +530,8 @@ class TestUsersEndpoints(unittest.TestCase):
         
         create_response = self.client.post('/api/v1/users/', 
                                          data=json.dumps(user_data),
-                                         content_type='application/json')
+                                         content_type='application/json',
+                                         headers={'Authorization': f'Bearer {self.admin_token}'})
         
         created_user = json.loads(create_response.data)
         user_id = created_user['id']
@@ -526,7 +561,8 @@ class TestUsersEndpoints(unittest.TestCase):
         
         create_response = self.client.post('/api/v1/users/', 
                                          data=json.dumps(user_data),
-                                         content_type='application/json')
+                                         content_type='application/json',
+                                         headers={'Authorization': f'Bearer {self.admin_token}'})
         
         created_user = json.loads(create_response.data)
         user_id = created_user['id']
@@ -551,6 +587,143 @@ class TestUsersEndpoints(unittest.TestCase):
         self.assertEqual(response.status_code, 400)
         data = json.loads(response.data)
         self.assertEqual(data['error'], 'You cannot modify email or password')
+
+    def test_create_user_without_admin_token(self):
+        """Test qu'un utilisateur non-admin ne peut pas créer un utilisateur"""
+        # Crée un utilisateur normal d'abord
+        normal_user_data = {
+            'first_name': 'Normal',
+            'last_name': 'User',
+            'email': 'normal@example.com',
+            'password': 'password123'
+        }
+        create_response = self.client.post('/api/v1/users/', 
+                                         data=json.dumps(normal_user_data),
+                                         content_type='application/json',
+                                         headers={'Authorization': f'Bearer {self.admin_token}'})
+        normal_user = json.loads(create_response.data)
+        normal_token = self.get_auth_token('normal@example.com', 'password123')
+        
+        # L'utilisateur normal essaie de créer un autre utilisateur
+        new_user_data = {
+            'first_name': 'New',
+            'last_name': 'User',
+            'email': 'newuser@example.com',
+            'password': 'password123'
+        }
+        
+        response = self.client.post('/api/v1/users/', 
+                                  data=json.dumps(new_user_data),
+                                  content_type='application/json',
+                                  headers={'Authorization': f'Bearer {normal_token}'})
+        
+        # Doit échouer car ce n'est pas un admin
+        self.assertEqual(response.status_code, 403)
+        data = json.loads(response.data)
+        self.assertEqual(data['error'], 'Admin privileges required')
+
+    def test_create_user_without_token(self):
+        """Test qu'on ne peut pas créer un utilisateur sans token JWT"""
+        user_data = {
+            'first_name': 'New',
+            'last_name': 'User',
+            'email': 'newuser@example.com',
+            'password': 'password123'
+        }
+        
+        response = self.client.post('/api/v1/users/', 
+                                  data=json.dumps(user_data),
+                                  content_type='application/json')
+        
+        # Doit échouer car pas de token
+        self.assertEqual(response.status_code, 401)
+
+    def test_admin_can_modify_any_user_email(self):
+        """Test qu'un admin peut modifier l'email d'un utilisateur"""
+        # Crée un utilisateur
+        user_data = {
+            'first_name': 'Test',
+            'last_name': 'User',
+            'email': 'testuser@example.com',
+            'password': 'password123'
+        }
+        create_response = self.client.post('/api/v1/users/', 
+                                         data=json.dumps(user_data),
+                                         content_type='application/json',
+                                         headers={'Authorization': f'Bearer {self.admin_token}'})
+        created_user = json.loads(create_response.data)
+        user_id = created_user['id']
+        
+        # L'admin modifie l'email
+        update_data = {
+            'email': 'updatedemail@example.com'
+        }
+        response = self.client.put(f'/api/v1/users/{user_id}', 
+                                 data=json.dumps(update_data),
+                                 content_type='application/json',
+                                 headers={'Authorization': f'Bearer {self.admin_token}'})
+        
+        self.assertEqual(response.status_code, 200)
+        data = json.loads(response.data)
+        self.assertEqual(data['email'], 'updatedemail@example.com')
+
+    def test_admin_can_modify_any_user_password(self):
+        """Test qu'un admin peut modifier le password d'un utilisateur"""
+        # Crée un utilisateur
+        user_data = {
+            'first_name': 'Test',
+            'last_name': 'User',
+            'email': 'testuser2@example.com',
+            'password': 'password123'
+        }
+        create_response = self.client.post('/api/v1/users/', 
+                                         data=json.dumps(user_data),
+                                         content_type='application/json',
+                                         headers={'Authorization': f'Bearer {self.admin_token}'})
+        created_user = json.loads(create_response.data)
+        user_id = created_user['id']
+        
+        # L'admin modifie le password
+        update_data = {
+            'password': 'newpassword123'
+        }
+        response = self.client.put(f'/api/v1/users/{user_id}', 
+                                 data=json.dumps(update_data),
+                                 content_type='application/json',
+                                 headers={'Authorization': f'Bearer {self.admin_token}'})
+        
+        self.assertEqual(response.status_code, 200)
+
+    def test_admin_can_modify_other_user(self):
+        """Test qu'un admin peut modifier un autre utilisateur"""
+        # Crée un utilisateur normal
+        user_data = {
+            'first_name': 'Normal',
+            'last_name': 'User',
+            'email': 'normaluser@example.com',
+            'password': 'password123'
+        }
+        create_response = self.client.post('/api/v1/users/', 
+                                         data=json.dumps(user_data),
+                                         content_type='application/json',
+                                         headers={'Authorization': f'Bearer {self.admin_token}'})
+        created_user = json.loads(create_response.data)
+        user_id = created_user['id']
+        
+        # L'admin modifie cet utilisateur
+        update_data = {
+            'first_name': 'Modified',
+            'last_name': 'ByAdmin'
+        }
+        response = self.client.put(f'/api/v1/users/{user_id}', 
+                                 data=json.dumps(update_data),
+                                 content_type='application/json',
+                                 headers={'Authorization': f'Bearer {self.admin_token}'})
+        
+        self.assertEqual(response.status_code, 200)
+        data = json.loads(response.data)
+        self.assertEqual(data['first_name'], 'Modified')
+        self.assertEqual(data['last_name'], 'ByAdmin')
 
 
 if __name__ == '__main__':
