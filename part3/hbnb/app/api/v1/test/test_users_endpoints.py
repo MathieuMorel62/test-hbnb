@@ -6,6 +6,7 @@ import json
 sys.path.append(os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))))
 from app import create_app
 from app.models.user import User
+from app.persistence.repository import InMemoryRepository
 
 
 class TestUsersEndpoints(unittest.TestCase):
@@ -13,16 +14,26 @@ class TestUsersEndpoints(unittest.TestCase):
 
     def setUp(self):
         """Configuration avant chaque test"""
-        self.app = create_app()
+        # Créer des repositories en mémoire pour les tests
+        user_repo = InMemoryRepository()
+        place_repo = InMemoryRepository()
+        review_repo = InMemoryRepository()
+        amenity_repo = InMemoryRepository()
+        
+        repositories = {
+            'user_repo': user_repo,
+            'place_repo': place_repo,
+            'review_repo': review_repo,
+            'amenity_repo': amenity_repo
+        }
+        
+        self.app = create_app(repositories)
         self.client = self.app.test_client()
         self.app_context = self.app.app_context()
         self.app_context.push()
         
-        # Crée une nouvelle instance du facade pour chaque test
-        from app.api.v1.users import facade
-        facade.user_repo._storage.clear()  # Nettoie le repository
-        
         # Crée un utilisateur admin pour les tests
+        from app.services import facade
         self.admin_user = facade.create_user({
             'first_name': 'Admin',
             'last_name': 'User',
