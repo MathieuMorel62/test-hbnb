@@ -1,6 +1,6 @@
-# 🧪 Organisation des Tests HBNB
+# Organisation des Tests HBNB
 
-## 📁 Structure des Tests
+## Structure des Tests
 
 La nouvelle organisation des tests suit une structure modulaire pour un meilleur suivi et organisation :
 
@@ -38,7 +38,7 @@ hbnb/
 │           └── run_tests.py       # Tests du module Persistence (à développer)
 ```
 
-## 🚀 Comment Exécuter les Tests
+## Comment Exécuter les Tests
 
 ### 1. Tous les Tests
 ```bash
@@ -129,7 +129,7 @@ python3 run_tests.py amenities_facade
 python3 test_all.py --help
 ```
 
-## 📊 Format des Résultats
+## Format des Résultats
 
 Le lanceur global affiche :
 - 🧪 Module en cours de test
@@ -139,7 +139,7 @@ Le lanceur global affiche :
 - 📊 Statistiques par classe
 - 📋 Résumé global final
 
-## 🔧 Ajouter de Nouveaux Tests
+## Ajouter de Nouveaux Tests
 
 ### Pour les Modèles
 1. Créez votre fichier de test dans `app/models/test/`
@@ -161,7 +161,7 @@ Le lanceur global affiche :
 2. Mettez à jour `app/persistence/test/run_tests.py`
 3. Ajoutez les classes dans `test_all.py`
 
-## 🎯 Avantages de Cette Organisation
+## Avantages de Cette Organisation
 
 - ✅ **Modularité** : Tests organisés par module fonctionnel
 - ✅ **Scalabilité** : Facile d'ajouter de nouveaux modules de tests
@@ -169,7 +169,7 @@ Le lanceur global affiche :
 - ✅ **Maintenance** : Structure claire et logique
 - ✅ **CI/CD** : Compatible avec les pipelines d'intégration continue
 
-## 📈 Statistiques Actuelles
+## Statistiques Actuelles
 
 - **Total des tests** : **164 tests** (45 Models + 91 API + 28 Services)
 - **Modules testés** : 
@@ -180,7 +180,7 @@ Le lanceur global affiche :
 - **Taux de réussite** : 100% ✅
 - **Couverture** : 100% des fonctionnalités développées
 
-## 🎯 Types de Tests Couverts
+## Types de Tests Couverts
 
 ### **Tests de Modèles (Models) - 45 tests**
 
@@ -395,7 +395,7 @@ Le lanceur global affiche :
   - Liste complète des amenities
   - Mise à jour (succès + inexistant + données invalides + nom trop long)
 
-## 🔐 Tests d'Authentification JWT
+## Tests d'Authentification JWT
 
 ### **Endpoints Protégés (JWT requis)**
 
@@ -442,7 +442,7 @@ Le lanceur global affiche :
 - ✅ Tous les endpoints protégés retournent 401 sans token
 - ✅ Tous les endpoints protégés retournent 403 pour actions non autorisées
 
-## 🎯 Couverture de Tests Détaillée
+## Couverture de Tests Détaillée
 
 ### **Facade (Services) - 100% Couvert**
 
@@ -490,7 +490,7 @@ Le lanceur global affiche :
 | `/api/v1/auth/login` | POST | ✅ | Succès + email invalide + password invalide + champs manquants + token format |
 | `/api/v1/auth/protected` | GET | ✅ | Token valide + sans token + token invalide + token expiré |
 
-## 🆕 Nouveaux Tests Ajoutés (Authentification JWT et Admin)
+## Nouveaux Tests Ajoutés (Authentification JWT et Admin)
 
 ### **Tests d'Authentification (Auth Endpoints) - 11 tests**
 - ✅ `test_login_success()` - Connexion réussie
@@ -537,7 +537,7 @@ Le lanceur global affiche :
 - ✅ `test_admin_can_modify_any_user_password()` - Admin peut modifier le password d'un utilisateur
 - ✅ `test_admin_can_modify_other_user()` - Admin peut modifier n'importe quel utilisateur
 
-## 🚀 Prochaines Étapes
+## Prochaines Étapes
 
 ### **Tests à Développer**
 1. **Tests de Persistence** - Repository et base de données
@@ -553,7 +553,7 @@ Le lanceur global affiche :
 - Tests de rate limiting
 - Tests de tokens refresh
 
-## 📝 Notes Importantes
+## Notes Importantes
 
 - **Endpoints Admin Only (JWT admin requis)** :
   - POST `/api/v1/users/` - Création d'utilisateur
