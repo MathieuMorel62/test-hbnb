@@ -26,6 +26,11 @@ from app.api.v1.test.test_reviews_endpoints import TestReviewsEndpoints
 from app.api.v1.test.test_auth_endpoints import TestAuthEndpoints
 from app.services.test.test_facade import TestHBnBFacade
 from app.services.test.test_amenities_facade import TestAmenitiesFacade
+from app.persistence.test.test_repository import (
+    TestRepositoryInterface,
+    TestInMemoryRepository,
+    TestSQLAlchemyRepositoryStructure
+)
 
 
 
@@ -71,7 +76,11 @@ def discover_all_tests():
             (TestHBnBFacade, "Tests HBnB Facade (Services)"),
             (TestAmenitiesFacade, "Tests Amenities Facade (Services)"),
         ],
-        'Persistence': []
+        'Persistence': [
+            (TestRepositoryInterface, "Tests Interface Repository (Persistence)"),
+            (TestInMemoryRepository, "Tests InMemoryRepository (Persistence)"),
+            (TestSQLAlchemyRepositoryStructure, "Tests Structure SQLAlchemyRepository (Persistence)")
+        ]
     }
     
     return test_modules
@@ -202,7 +211,10 @@ def run_specific_test(test_class_name):
         'places_endpoints': TestPlacesEndpoints,
         'auth_endpoints': TestAuthEndpoints,
         'facade': TestHBnBFacade,
-        'amenities_facade': TestAmenitiesFacade
+        'amenities_facade': TestAmenitiesFacade,
+        'repository_interface': TestRepositoryInterface,
+        'inmemory_repository': TestInMemoryRepository,
+        'sqlalchemy_repository': TestSQLAlchemyRepositoryStructure
     }
     
     if test_class_name.lower() not in test_classes:
